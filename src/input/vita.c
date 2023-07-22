@@ -40,6 +40,7 @@
 #include <psp2/sysmodule.h>
 #include <psp2/kernel/sysmem.h>
 #include <psp2/kernel/threadmgr.h>
+#include <psp2/motion.h>
 
 #include <psp2/ctrl.h>
 #include <psp2/touch.h>
@@ -47,8 +48,10 @@
 
 #define WIDTH 960
 #define HEIGHT 544
+#define MOUSE_SENSITIVITY 2400.0
 
 struct mapping map = {0};
+SceFQuaternion deviceQuat_old = {0.0f, 0.0f, 0.0f, 0.0f};
 
 typedef struct input_data {
     short button;
@@ -81,6 +84,7 @@ typedef struct TouchData {
 double mouse_multiplier;
 
 #define MOUSE_ACTION_DELAY 100000 // 100ms
+#define MOTION_ACTION_DELAY 500000 // 400ms
 
 inline bool mouse_click(short finger_count, bool press) {
   int mode;
@@ -116,6 +120,21 @@ inline void move_mouse(TouchData old, TouchData cur) {
   LiSendMouseMoveEvent(x, y);
 }
 
+inline void move_motion(SceMotionState motionState) {
+  // Get the mouse position.
+  double delta_x = (deviceQuat_old.y-motionState.deviceQuat.y) * (float)MOUSE_SENSITIVITY;
+  double delta_y = (deviceQuat_old.x-motionState.deviceQuat.x) * (float)MOUSE_SENSITIVITY;
+
+  if (delta_x == 0 && delta_y == 0) {
+    return;
+  }
+
+  int x = lround(delta_x * mouse_multiplier);
+  int y = lround(delta_y * mouse_multiplier);
+
+  LiSendMouseMoveEvent(x, y);
+}
+
 inline void move_wheel(TouchData old, TouchData cur) {
   int old_y = (old.points[0].y + old.points[1].y) / 2;
   int cur_y = (cur.points[0].y + cur.points[1].y) / 2;
@@ -130,6 +149,7 @@ SceCtrlData pad, pad_old;
 TouchData touch;
 TouchData touch_old, swipe;
 SceTouchData front, back;
+SceMotionState motionState;
 
 int front_state = NO_TOUCH_ACTION;
 short finger_count = 0;
@@ -140,6 +160,10 @@ static int special_status;
 
 input_data curr, old;
 int controller_port;
+bool _calibrateGyro = true;
+bool _motionActivated = false;
+bool _motionCalibrated = false;
+int _motionResetCount = 0;
 
 // TODO config
 static int VERTICAL;
@@ -342,14 +366,21 @@ inline void special(uint32_t defined, uint32_t pressed, uint32_t old_pressed) {
 
 }
 
+float QuatLength(SceFQuaternion v1, SceFQuaternion v2) {
+  float x_diff = v1.x - v2.x;
+  float y_diff = v1.y - v2.y;
+  float z_diff = v1.z - v2.z;
+
+  return sqrt(x_diff * x_diff + y_diff * y_diff + z_diff * z_diff);
+}
+
 static inline void vitainput_process(void) {
   memset(&pad, 0, sizeof(pad));
   memset(&touch, 0, sizeof(TouchData));
   memset(&curr, 0, sizeof(input_data));
-
   sceCtrlSetSamplingModeExt(SCE_CTRL_MODE_ANALOG_WIDE);
   sceCtrlPeekBufferPositiveExt2(controller_port, &pad, 1);
-
+  sceMotionGetState(&motionState);
   sceTouchPeek(SCE_TOUCH_PORT_FRONT, &front, 1);
   sceTouchPeek(SCE_TOUCH_PORT_BACK, &back, 1);
   read_frontscreen();
@@ -394,6 +425,26 @@ static inline void vitainput_process(void) {
   special(config.special_keys.se,
           is_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SE),
           is_old_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SE));
+
+  //Resetting motion causes downwards jerk temporary code to prevent
+  if(sceRtcCompareTick(&current, &until) > 0 && !_calibrateGyro){
+    move_motion(motionState);
+  }
+
+  if((is_pressed(map.btn_tl))){
+    if(_calibrateGyro){
+      sceMotionReset();
+      sceRtcTickAddMicroseconds(&until, &current, MOTION_ACTION_DELAY);
+      _motionResetCount = 1;
+    }
+    _calibrateGyro = false;
+  }else{
+    _calibrateGyro = true;
+    _motionCalibrated = false;
+    _motionResetCount = 0;
+  }
+
+  memcpy(&deviceQuat_old, &motionState.deviceQuat, sizeof(struct SceFQuaternion));
 
   // mouse
   switch (front_state) {
@@ -479,7 +530,8 @@ bool vitainput_init() {
   sceCtrlSetSamplingModeExt(SCE_CTRL_MODE_ANALOG_WIDE);
   sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, SCE_TOUCH_SAMPLING_STATE_START);
   sceTouchSetSamplingState(SCE_TOUCH_PORT_BACK, SCE_TOUCH_SAMPLING_STATE_START);
-
+  sceMotionStartSampling();
+  
   SceUID thid = sceKernelCreateThread("vitainput_thread", vitainput_thread, 0, 0x40000, 0, 0, NULL);
   if (thid >= 0) {
     sceKernelStartThread(thid, 0, NULL);
