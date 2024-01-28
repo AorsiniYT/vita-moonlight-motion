@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <openssl/crypto.h>
 #include <openssl/pem.h>
 #include <openssl/conf.h>
 #include <openssl/pkcs12.h>
@@ -40,25 +41,18 @@ CERT_KEY_PAIR mkcert_generate() {
 
     bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
 
-    printf("bio_err %d 0x%x\n", bio_err, bio_err);
-
-    SSLeay_add_all_algorithms();
-    printf("add all algorithms\n");
+    OpenSSL_add_all_algorithms();
     ERR_load_crypto_strings();
-    printf("load crypto strings\n");
 
     mkcert(&x509, &pkey, NUM_BITS, SERIAL, NUM_YEARS);
-    printf("mkcert done\n");
 
     p12 = PKCS12_create("limelight", "GameStream", pkey, x509, NULL, 0, 0, 0, 0, 0);
-    printf("p12 = 0x%x\n", p12);
 
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_cleanup();
 #endif
     CRYPTO_cleanup_all_ex_data();
 
-    CRYPTO_mem_leaks(bio_err);
     BIO_free(bio_err);
 
     return (CERT_KEY_PAIR) {x509, pkey, p12};

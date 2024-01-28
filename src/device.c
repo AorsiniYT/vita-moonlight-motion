@@ -111,7 +111,7 @@ bool update_device(device_info_t *info) {
 }
 
 void load_all_known_devices() {
-  struct stat st;
+  //struct stat st;
   device_info_t info;
 
   SceUID dfd = sceIoDopen(DATA_DIR);

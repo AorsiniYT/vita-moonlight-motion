@@ -17,7 +17,7 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "loop.h"
+//#include "loop.h"
 
 #include "global.h"
 
@@ -29,14 +29,14 @@
 // #include <poll.h>
 #include <signal.h>
 #include <string.h>
-
+/* 
 static struct pollfd* fds = NULL;
 static FdHandler* fdHandlers = NULL;
 static int numFds = 0;
 
-static int sigFd;
+static int sigFd; */
 
-static int loop_sig_handler(int fd) {
+/* static int loop_sig_handler(int fd) {
   #if 0
   struct signalfd_siginfo info;
   if (read(fd, &info, sizeof(info)) != sizeof(info))
@@ -50,9 +50,9 @@ static int loop_sig_handler(int fd) {
   }
   return LOOP_OK;
   #endif
-}
+} */
 
-void loop_add_fd(int fd, FdHandler handler, int events) {
+/* void loop_add_fd(int fd, FdHandler handler, int events) {
   #if 0
   int fdindex = numFds;
   numFds++;
@@ -74,9 +74,9 @@ void loop_add_fd(int fd, FdHandler handler, int events) {
   fds[fdindex].events = events;
   fdHandlers[fdindex] = handler;
   #endif
-}
+} */
 
-void loop_remove_fd(int fd) {
+/* void loop_remove_fd(int fd) {
   #if 0
   numFds--;
   int fdindex;
@@ -93,9 +93,9 @@ void loop_remove_fd(int fd) {
     memcpy(&fdHandlers[fdindex], &fdHandlers[numFds], sizeof(FdHandler));
   }
   #endif
-}
+} */
 
-void loop_main() {
+/* void loop_main() {
   #if 0
   main_thread_id = pthread_self();
   sigset_t sigset;
@@ -120,4 +120,4 @@ void loop_main() {
     }
   }
   #endif
-}
+} */

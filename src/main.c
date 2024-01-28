@@ -75,6 +75,10 @@ static void vita_init() {
 
   ret = sceSysmoduleLoadModule(SCE_SYSMODULE_NET);
 
+  if (!ret) {
+    printf("Could not load net module!");
+  }
+
   size_t net_mem_sz = 100 * 1024;
   SceNetInitParam net_param = {0};
   net_param.memory = calloc(net_mem_sz, 1);
@@ -84,6 +88,9 @@ static void vita_init() {
   ret = sceNetCtlInit();
   // TODO(xyz): cURL breaks when socket FD is too big, very hacky workaround below!
   int s = sceNetSocket("", SCE_NET_AF_INET, SCE_NET_SOCK_STREAM, 0);
+  if (!ret) {
+    printf("Could not load net module!");
+  }
   sceNetSocketClose(s);
   if (s >= 20) {
     printf("Cycling sockets...\n");

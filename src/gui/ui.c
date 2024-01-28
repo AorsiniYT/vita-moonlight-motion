@@ -64,6 +64,7 @@ int ui_main_menu_loop(int cursor, void *context, const input_data *input) {
       exit(0);
       return 0;
   }
+  return 0;
 }
 
 int ui_main_menu_back(void *context) {
@@ -95,9 +96,9 @@ int ui_main_menu() {
   snprintf(program_info, 256, "Moonlight v%d.%d.%d", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
   MENU_TITLE(program_info);
 
-  char name[256] = {0};
+  //char name[256] = {0};
   char addr[256] = {0};
-  char resume_msg[256] = {0};
+  char resume_msg[512] = {0};
   //if (ui_connect_connected()) {
   //  ui_connect_address(addr);
   //  sprintf(name, "Resume connection to %s", addr);
@@ -149,6 +150,7 @@ int global_loop(int cursor, void *ctx, const input_data *input) {
       }
     }
   }
+  return 0;
 }
 
 void gui_init() {

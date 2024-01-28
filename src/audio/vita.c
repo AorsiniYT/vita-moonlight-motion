@@ -61,7 +61,7 @@ static int vita_renderer_init(int audioConfiguration, POPUS_MULTISTREAM_CONFIGUR
       return VITA_AUDIO_ERROR_BAD_OPUS;
   }
 
-  port = sceAudioOutOpenPort(SCE_AUDIO_OUT_PORT_TYPE_MAIN, VITA_SAMPLES, 48000, SCE_AUDIO_OUT_PARAM_FORMAT_S16_STEREO);
+  port = sceAudioOutOpenPort(SCE_AUDIO_OUT_PORT_TYPE_MAIN, VITA_SAMPLES, 48000, SCE_AUDIO_OUT_MODE_STEREO);
 
   if (port < 0) {
       vita_renderer_cleanup();

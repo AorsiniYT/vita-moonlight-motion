@@ -21,7 +21,7 @@
 
 #include "h264_stream.h"
 
-static h264_stream_t* h264_stream = NULL;
+static h264_stream_t* h264_stream;
 static int initial_width, initial_height;
 
 void gs_sps_init(int width, int height) {
@@ -33,7 +33,7 @@ void gs_sps_init(int width, int height) {
 void gs_sps_stop() {
   if (h264_stream) {
     h264_free(h264_stream);
-    h264_stream = NULL;
+    h264_stream = 0;
   }
 }
 

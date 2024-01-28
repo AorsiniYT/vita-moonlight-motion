@@ -22,6 +22,7 @@
 #include "mkcert.h"
 #include "client.h"
 #include "errors.h"
+#include "limits.h"
 
 #include <Limelight.h>
 
@@ -29,8 +30,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-#include <uuid.h>
 #include <arpa/inet.h>
+#include <uuid.h>
 #include <openssl/sha.h>
 #include <openssl/aes.h>
 #include <openssl/rand.h>
@@ -38,8 +39,6 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
-
-#include <psp2/io/stat.h>
 
 #define UNIQUE_FILE_NAME "uniqueid.dat"
 #define P12_FILE_NAME "client.p12"
@@ -49,29 +48,26 @@
 
 static char unique_id[UNIQUEID_CHARS+1];
 static X509 *cert;
-static char cert_hex[4096];
+static char cert_hex[8192];
 static EVP_PKEY *privateKey;
 
 const char* gs_error;
 
-#ifdef __vita__
-#include "../src/graphics.h"
-#endif
-
 #define LEN_AS_HEX_STR(x) ((x) * 2 + 1)
 #define SIZEOF_AS_HEX_STR(x) LEN_AS_HEX_STR(sizeof(x))
 
-#define SIGNATURE_LEN 256
-
 #define UUID_STRLEN 37
 
+#define PATH_MAX 1024
+
 static int mkdirtree(const char* directory) {
-  char buffer[1024];
+  char buffer[PATH_MAX];
   char* p = buffer;
 
   // The passed in string could be a string literal
   // so we must copy it first
-  strcpy(p, directory);
+  strncpy(p, directory, PATH_MAX - 1);
+  buffer[PATH_MAX - 1] = '\0';
 
   while (*p != 0) {
     // Find the end of the path element
@@ -83,8 +79,7 @@ static int mkdirtree(const char* directory) {
     *p = 0;
 
     // Create the directory if it doesn't exist already
-    int ret = sceIoMkdir(buffer, 0777);
-    if (ret < 0 && ret != 0x8001000d && ret != 0x80010011) {
+    if (mkdir(buffer, 0775) == -1 && errno != EEXIST) {
         return -1;
     }
 
@@ -95,8 +90,8 @@ static int mkdirtree(const char* directory) {
 }
 
 static int load_unique_id(const char* keyDirectory) {
-  char uniqueFilePath[4096];
-  sprintf(uniqueFilePath, "%s/%s", keyDirectory, UNIQUE_FILE_NAME);
+  char uniqueFilePath[PATH_MAX];
+  snprintf(uniqueFilePath, PATH_MAX, "%s/%s", keyDirectory, UNIQUE_FILE_NAME);
 
   FILE *fd = fopen(uniqueFilePath, "r");
   if (fd == NULL || fread(unique_id, UNIQUEID_CHARS, 1, fd) != UNIQUEID_CHARS) {
@@ -117,21 +112,20 @@ static int load_unique_id(const char* keyDirectory) {
 }
 
 static int load_cert(const char* keyDirectory) {
-  char certificateFilePath[4096];
-  sprintf(certificateFilePath, "%s/%s", keyDirectory, CERTIFICATE_FILE_NAME);
+  char certificateFilePath[PATH_MAX];
+  snprintf(certificateFilePath, PATH_MAX, "%s/%s", keyDirectory, CERTIFICATE_FILE_NAME);
 
-  char keyFilePath[4096];
-  sprintf(&keyFilePath[0], "%s/%s", keyDirectory, KEY_FILE_NAME);
+  char keyFilePath[PATH_MAX];
+  snprintf(&keyFilePath[0], PATH_MAX, "%s/%s", keyDirectory, KEY_FILE_NAME);
 
   FILE *fd = fopen(certificateFilePath, "r");
   if (fd == NULL) {
     printf("Generating certificate...");
-    printf(" this is only done once and can take a long time on Vita, allow up to 5 minutes... ");
     CERT_KEY_PAIR cert = mkcert_generate();
     printf("done\n");
 
-    char p12FilePath[4096];
-    sprintf(p12FilePath, "%s/%s", keyDirectory, P12_FILE_NAME);
+    char p12FilePath[PATH_MAX];
+    snprintf(p12FilePath, PATH_MAX, "%s/%s", keyDirectory, P12_FILE_NAME);
 
     mkcert_save(certificateFilePath, p12FilePath, keyFilePath, cert);
     mkcert_free(cert);
@@ -241,7 +235,7 @@ static int load_serverinfo(PSERVER_DATA server, bool https) {
 
   server->paired = pairedText != NULL && strcmp(pairedText, "1") == 0;
   server->currentGame = currentGameText == NULL ? 0 : atoi(currentGameText);
-  server->supports4K = serverCodecModeSupportText != NULL;
+  server->serverInfo.serverCodecModeSupport = serverCodecModeSupportText == NULL ? SCM_H264 : atoi(serverCodecModeSupportText);
   server->serverMajorVersion = atoi(server->serverInfo.serverInfoAppVersion);
   server->isNvidiaSoftware = strstr(stateText, "MJOLNIR") != NULL;
 
@@ -314,6 +308,12 @@ static void bytes_to_hex(unsigned char *in, char *out, size_t len) {
     sprintf(out + i * 2, "%02x", in[i]);
   }
   out[len * 2] = 0;
+}
+
+static void hex_to_bytes(const char *in, unsigned char* out, size_t len) {
+  for (int count = 0; count < len; count += 2) {
+    sscanf(&in[count], "%2hhx", &out[count / 2]);
+  }
 }
 
 static int sign_it(const char *msg, size_t mlen, unsigned char **sig, size_t *slen, EVP_PKEY *pkey) {
@@ -428,13 +428,20 @@ int gs_unpair(PSERVER_DATA server) {
 int gs_pair(PSERVER_DATA server, char* pin) {
   int ret = GS_OK;
   char* result = NULL;
-  char url[5120];
+  size_t url_max_len = 16384;
+  char* url = malloc(url_max_len);
   uuid_t uuid;
   char uuid_str[UUID_STRLEN];
+  char* plaincert = NULL;
+  char* challenge_response = NULL;
+  char* pairing_secret = NULL;
+  char* client_pairing_secret = NULL;
+  char* client_pairing_secret_hex = NULL;
 
   if (server->paired) {
     gs_error = "Already paired";
-    return GS_WRONG_STATE;
+    ret = GS_WRONG_STATE;
+    goto cleanup;
   }
 
   unsigned char salt_data[16];
@@ -444,7 +451,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
-  snprintf(url, sizeof(url), "http://%s:%u/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&phrase=getservercert&salt=%s&clientcert=%s", server->serverInfo.address, server->httpPort, unique_id, uuid_str, salt_hex, cert_hex);
+  snprintf(url, url_max_len, "http://%s:%u/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&phrase=getservercert&salt=%s&clientcert=%s", server->serverInfo.address, server->httpPort, unique_id, uuid_str, salt_hex, cert_hex);
   PHTTP_DATA data = http_create_data();
   if (data == NULL)
     return GS_OUT_OF_MEMORY;
@@ -467,20 +474,11 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   if ((ret = xml_search(data->memory, data->size, "plaincert", &result)) != GS_OK)
     goto cleanup;
 
-  char plaincert[8192];
 
-  if (strlen(result)/2 > sizeof(plaincert) - 1) {
-    gs_error = "Server certificate too big";
-    ret = GS_FAILED;
-    goto cleanup;
-  }
-
-  for (int count = 0; count < strlen(result); count += 2) {
-    char hex_byte[3] = {result[count], result[count + 1], '\0'};
-    plaincert[count / 2] = (uint8_t)strtol(hex_byte, NULL, 16);
-  }
-  plaincert[strlen(result)/2] = '\0';
-  printf("%d / %d\n", strlen(result)/2, strlen(plaincert));
+  size_t plaincertlen = strlen(result)/2;
+  plaincert = malloc(plaincertlen + 1);
+  hex_to_bytes(result, plaincert, plaincertlen*2);
+  plaincert[plaincertlen] = 0;
 
   unsigned char salt_pin[sizeof(salt_data) + 4];
   unsigned char aes_key[32]; // Must fit SHA256
@@ -502,7 +500,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
-  snprintf(url, sizeof(url), "http://%s:%u/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&clientchallenge=%s", server->serverInfo.address, server->httpPort, unique_id, uuid_str, challenge_hex);
+  snprintf(url, url_max_len, "http://%s:%u/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&clientchallenge=%s", server->serverInfo.address, server->httpPort, unique_id, uuid_str, challenge_hex);
   if ((ret = http_request(url, data)) != GS_OK)
     goto cleanup;
 
@@ -535,11 +533,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
     goto cleanup;
   }
 
-  for (int count = 0; count < strlen(result); count += 2) {
-    char hex_byte[3] = {result[count], result[count + 1], '\0'};
-    challenge_response_data_enc[count / 2] = (uint8_t)strtol(hex_byte, NULL, 16);
-  }
-
+  hex_to_bytes(result, challenge_response_data_enc, strlen(result));
   decrypt(challenge_response_data_enc, sizeof(challenge_response_data_enc), aes_key, challenge_response_data);
 
   char client_secret_data[16];
@@ -548,7 +542,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   const ASN1_BIT_STRING *asnSignature;
   X509_get0_signature(&asnSignature, NULL, cert);
 
-  char challenge_response[16 + SIGNATURE_LEN + sizeof(client_secret_data)];
+  challenge_response = malloc(16 + asnSignature->length + sizeof(client_secret_data));
   char challenge_response_hash[32];
   char challenge_response_hash_enc[sizeof(challenge_response_hash)];
   char challenge_response_hex[SIZEOF_AS_HEX_STR(challenge_response_hash_enc)];
@@ -565,7 +559,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
-  snprintf(url, sizeof(url), "http://%s:%u/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&serverchallengeresp=%s", server->serverInfo.address, server->httpPort, unique_id, uuid_str, challenge_response_hex);
+  snprintf(url, url_max_len, "http://%s:%u/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&serverchallengeresp=%s", server->serverInfo.address, server->httpPort, unique_id, uuid_str, challenge_response_hex);
   if ((ret = http_request(url, data)) != GS_OK)
     goto cleanup;
 
@@ -589,20 +583,15 @@ int gs_pair(PSERVER_DATA server, char* pin) {
     goto cleanup;
   }
 
-  char pairing_secret[16 + SIGNATURE_LEN];
-
-  if (strlen(result) / 2 > sizeof(pairing_secret)) {
-    gs_error = "Pairing secret too big";
-    ret = GS_FAILED;
+  size_t pairing_secret_len = strlen(result) / 2;
+  if (pairing_secret_len <= 16) {
+    ret = GS_INVALID;
     goto cleanup;
   }
 
-  for (int count = 0; count < strlen(result); count += 2) {
-    char hex_byte[3] = {result[count], result[count + 1], '\0'};
-    pairing_secret[count / 2] = (uint8_t)strtol(hex_byte, NULL, 16);
-  }
-
-  if (!verifySignature(pairing_secret, 16, pairing_secret+16, SIGNATURE_LEN, plaincert)) {
+  pairing_secret = malloc(pairing_secret_len);
+  hex_to_bytes(result, pairing_secret, pairing_secret_len*2);
+  if (!verifySignature(pairing_secret, 16, pairing_secret+16, pairing_secret_len-16, plaincert)) {
     gs_error = "MITM attack detected";
     ret = GS_FAILED;
     goto cleanup;
@@ -616,15 +605,15 @@ int gs_pair(PSERVER_DATA server, char* pin) {
       goto cleanup;
   }
 
-  char client_pairing_secret[sizeof(client_secret_data) + SIGNATURE_LEN];
-  char client_pairing_secret_hex[SIZEOF_AS_HEX_STR(client_pairing_secret)];
+  client_pairing_secret = malloc(sizeof(client_secret_data) + s_len);
+  client_pairing_secret_hex = malloc(LEN_AS_HEX_STR(sizeof(client_secret_data) + s_len));
   memcpy(client_pairing_secret, client_secret_data, sizeof(client_secret_data));
-  memcpy(client_pairing_secret + sizeof(client_secret_data), signature, SIGNATURE_LEN);
-  bytes_to_hex(client_pairing_secret, client_pairing_secret_hex, sizeof(client_secret_data) + SIGNATURE_LEN);
+  memcpy(client_pairing_secret + sizeof(client_secret_data), signature, s_len);
+  bytes_to_hex(client_pairing_secret, client_pairing_secret_hex, sizeof(client_secret_data) + s_len);
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
-  snprintf(url, sizeof(url), "http://%s:%u/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&clientpairingsecret=%s", server->serverInfo.address, server->httpPort, unique_id, uuid_str, client_pairing_secret_hex);
+  snprintf(url, url_max_len, "http://%s:%u/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&clientpairingsecret=%s", server->serverInfo.address, server->httpPort, unique_id, uuid_str, client_pairing_secret_hex);
   if ((ret = http_request(url, data)) != GS_OK)
     goto cleanup;
 
@@ -643,7 +632,7 @@ int gs_pair(PSERVER_DATA server, char* pin) {
 
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
-  snprintf(url, sizeof(url), "https://%s:%u/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&phrase=pairchallenge", server->serverInfo.address, server->httpsPort, unique_id, uuid_str);
+  snprintf(url, url_max_len, "https://%s:%u/pair?uniqueid=%s&uuid=%s&devicename=roth&updateState=1&phrase=pairchallenge", server->serverInfo.address, server->httpsPort, unique_id, uuid_str);
   if ((ret = http_request(url, data)) != GS_OK)
     goto cleanup;
 
@@ -666,8 +655,13 @@ int gs_pair(PSERVER_DATA server, char* pin) {
   if (ret != GS_OK)
     gs_unpair(server);
 
-  if (result != NULL)
-    free(result);
+  free(url);
+  free(plaincert);
+  free(challenge_response);
+  free(pairing_secret);
+  free(client_pairing_secret);
+  free(client_pairing_secret_hex);
+  free(result);
 
   http_free_data(data);
 
@@ -724,14 +718,11 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
   if (!correct_mode && !server->unsupported)
     return GS_NOT_SUPPORTED_MODE;
 
-  if (config->height >= 2160 && !server->supports4K)
-    return GS_NOT_SUPPORTED_4K;
-
   RAND_bytes(config->remoteInputAesKey, sizeof(config->remoteInputAesKey));
   memset(config->remoteInputAesIv, 0, sizeof(config->remoteInputAesIv));
 
   char url[4096];
-  uint32_t rikeyid = 0;
+  u_int32_t rikeyid = 0;
   RAND_bytes(config->remoteInputAesIv, sizeof(rikeyid));
   memcpy(&rikeyid, config->remoteInputAesIv, sizeof(rikeyid));
   rikeyid = htonl(rikeyid);
@@ -751,14 +742,14 @@ int gs_start_app(PSERVER_DATA server, STREAM_CONFIGURATION *config, int appId, b
   uuid_generate_random(uuid);
   uuid_unparse(uuid, uuid_str);
   int surround_info = SURROUNDAUDIOINFO_FROM_AUDIO_CONFIGURATION(config->audioConfiguration);
-  snprintf(url, sizeof(url), "https://%s:%u/%s?uniqueid=%s&uuid=%s&appid=%d&mode=%dx%dx%d&additionalStates=1&sops=%d&rikey=%s&rikeyid=%d&localAudioPlayMode=%d&surroundAudioInfo=%d&remoteControllersBitmap=%d&gcmap=%d%s",
+  snprintf(url, sizeof(url), "https://%s:%u/%s?uniqueid=%s&uuid=%s&appid=%d&mode=%dx%dx%d&additionalStates=1&sops=%d&rikey=%s&rikeyid=%d&localAudioPlayMode=%d&surroundAudioInfo=%d&remoteControllersBitmap=%d&gcmap=%d%s%s",
            server->serverInfo.address, server->httpsPort, server->currentGame ? "resume" : "launch", unique_id, uuid_str, appId, config->width, config->height, fps, sops, rikey_hex, rikeyid, localaudio, surround_info, gamepad_mask, gamepad_mask,
-           config->enableHdr ? "&hdrMode=1&clientHdrCapVersion=0&clientHdrCapSupportedFlagsInUint32=0&clientHdrCapMetaDataId=NV_STATIC_METADATA_TYPE_1&clientHdrCapDisplayData=0x0x0x0x0x0x0x0x0x0x0" : "");
+           (config->supportedVideoFormats & VIDEO_FORMAT_MASK_10BIT) ? "&hdrMode=1&clientHdrCapVersion=0&clientHdrCapSupportedFlagsInUint32=0&clientHdrCapMetaDataId=NV_STATIC_METADATA_TYPE_1&clientHdrCapDisplayData=0x0x0x0x0x0x0x0x0x0x0" : "",
+           LiGetLaunchUrlQueryParameters());
   if ((ret = http_request(url, data)) == GS_OK)
     server->currentGame = appId;
   else
     goto cleanup;
-  printf("ret = 0x%x\n", ret);
 
   if ((ret = xml_status(data->memory, data->size) != GS_OK))
     goto cleanup;

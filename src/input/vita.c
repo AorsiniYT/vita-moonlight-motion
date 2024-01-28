@@ -86,7 +86,7 @@ double mouse_multiplier;
 #define MOUSE_ACTION_DELAY 100000 // 100ms
 #define MOTION_ACTION_DELAY 500000 // 400ms
 
-inline bool mouse_click(short finger_count, bool press) {
+static inline bool mouse_click(short finger_count, bool press) {
   int mode;
 
   if (press) {
@@ -106,7 +106,7 @@ inline bool mouse_click(short finger_count, bool press) {
   return false;
 }
 
-inline void move_mouse(TouchData old, TouchData cur) {
+static inline void move_mouse(TouchData old, TouchData cur) {
   double delta_x = (cur.points[0].x - old.points[0].x) / 2.;
   double delta_y = (cur.points[0].y - old.points[0].y) / 2.;
 
@@ -120,7 +120,7 @@ inline void move_mouse(TouchData old, TouchData cur) {
   LiSendMouseMoveEvent(x, y);
 }
 
-inline void move_motion(SceMotionState motionState) {
+static inline void move_motion(SceMotionState motionState) {
   // Get the mouse position.
   double delta_x = (deviceQuat_old.y-motionState.deviceQuat.y) * (float)MOUSE_SENSITIVITY;
   double delta_y = (deviceQuat_old.x-motionState.deviceQuat.x) * (float)MOUSE_SENSITIVITY;
@@ -135,7 +135,7 @@ inline void move_motion(SceMotionState motionState) {
   LiSendMouseMoveEvent(x, y);
 }
 
-inline void move_wheel(TouchData old, TouchData cur) {
+static inline void move_wheel(TouchData old, TouchData cur) {
   int old_y = (old.points[0].y + old.points[1].y) / 2;
   int cur_y = (cur.points[0].y + cur.points[1].y) / 2;
   int delta_y = (cur_y - old_y) / 2;
@@ -156,7 +156,7 @@ short finger_count = 0;
 SceRtcTick current, until;
 
 
-static int special_status;
+//static int special_status;
 
 input_data curr, old;
 int controller_port;
@@ -177,7 +177,7 @@ static int HORIZONTAL;
 Section BACK_SECTIONS[4];
 Section FRONT_SECTIONS[4];
 
-inline uint8_t read_backscreen() {
+static inline uint8_t read_backscreen() {
   for (int i = 0; i < back.reportNum; i++) {
     int x = lerp(back.report[i].x, 1919, WIDTH);
     int y = lerp(back.report[i].y, 1087, HEIGHT);
@@ -214,7 +214,7 @@ inline uint8_t read_backscreen() {
 }
 
 
-inline uint8_t read_frontscreen() {
+static inline uint8_t read_frontscreen() {
   for (int i = 0; i < front.reportNum; i++) {
     int x = lerp(front.report[i].x, 1919, WIDTH);
     int y = lerp(front.report[i].y, 1087, HEIGHT);
@@ -255,7 +255,7 @@ inline uint8_t read_frontscreen() {
   return 0;
 }
 
-inline uint32_t is_pressed(uint32_t defined) {
+static inline uint32_t is_pressed(uint32_t defined) {
   uint32_t dev_type = defined & INPUT_TYPE_MASK;
   uint32_t dev_val  = defined & INPUT_VALUE_MASK;
 
@@ -268,7 +268,7 @@ inline uint32_t is_pressed(uint32_t defined) {
   return 0;
 }
 
-inline uint32_t is_old_pressed(uint32_t defined) {
+static inline uint32_t is_old_pressed(uint32_t defined) {
   uint32_t dev_type = defined & INPUT_TYPE_MASK;
   uint32_t dev_val  = defined & INPUT_VALUE_MASK;
 
@@ -281,7 +281,7 @@ inline uint32_t is_old_pressed(uint32_t defined) {
   return 0;
 }
 
-inline short read_analog(uint32_t defined) {
+static inline short read_analog(uint32_t defined) {
   uint32_t dev_type = defined & INPUT_TYPE_MASK;
   uint32_t dev_val  = defined & INPUT_VALUE_MASK;
 
@@ -313,7 +313,7 @@ inline short read_analog(uint32_t defined) {
   return is_pressed(defined) ? 0xff : 0;
 }
 
-inline void special(uint32_t defined, uint32_t pressed, uint32_t old_pressed) {
+static inline void special(uint32_t defined, uint32_t pressed, uint32_t old_pressed) {
   uint32_t dev_type = defined & INPUT_TYPE_MASK;
   uint32_t dev_val  = defined & INPUT_VALUE_MASK;
 
@@ -324,6 +324,7 @@ inline void special(uint32_t defined, uint32_t pressed, uint32_t old_pressed) {
           connection_minimize();
           return;
         }
+        return;
       case INPUT_TYPE_GAMEPAD:
         curr.button |= dev_val;
         return;

@@ -24,9 +24,6 @@
 #include <string.h>
 #include <curl/curl.h>
 
-#include <psp2/sysmodule.h>
-#include "../src/graphics.h"
-
 static CURL *curl;
 
 static bool debug;
@@ -69,11 +66,6 @@ int http_init(const char* keyDirectory, int logLevel) {
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, _write_curl);
   curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
   curl_easy_setopt(curl, CURLOPT_SSL_SESSIONID_CACHE, 0L);
-  curl_easy_setopt(curl, CURLOPT_MAXCONNECTS, 0L);
-  curl_easy_setopt(curl, CURLOPT_FRESH_CONNECT, 1L);
-  curl_easy_setopt(curl, CURLOPT_FORBID_REUSE, 1L);
-  curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);
-  curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
 
   return GS_OK;
 }
@@ -81,11 +73,12 @@ int http_init(const char* keyDirectory, int logLevel) {
 int http_request(char* url, PHTTP_DATA data) {
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, data);
   curl_easy_setopt(curl, CURLOPT_URL, url);
+#ifdef __FreeBSD__
+  curl_easy_setopt(curl, CURLOPT_FORBID_REUSE, 1);
+#endif
 
-  char url_tiny[48] = {0};
-  strncpy(url_tiny, url, sizeof(url_tiny) - 1);
   if (debug)
-    printf("GET %s\n", url_tiny);
+    printf("Request %s\n", url);
 
   if (data->size > 0) {
     free(data->memory);

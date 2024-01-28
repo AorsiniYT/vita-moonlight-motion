@@ -268,7 +268,7 @@ void draw_alert(char *message, menu_geom geom, char *buttons_captions[], int but
   char *default_captions[4] = {"Ok", "Cancel", "Options", "Delete"};
   for (int i = 0; i < buttons_count; i++) {
     char single_button_caption[64];
-    char button_caption[256];
+    char button_caption[60];
     if (buttons_captions && buttons_captions[i]) {
       strcpy(button_caption, buttons_captions[i]);
     } else {

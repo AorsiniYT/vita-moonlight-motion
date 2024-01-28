@@ -83,6 +83,10 @@ void psvDebugScreenInit() {
 
 	int ret = sceDisplaySetFrameBuf(&framebuf, SCE_DISPLAY_UPDATETIMING_NEXTVSYNC);
 
+	if (!ret) {
+		printf("Failure to set Framebuffer!");
+	}
+
 	g_fg_color = 0xFFFFFFFF;
 	g_bg_color = 0x00000000;
 }

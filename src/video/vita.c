@@ -42,6 +42,8 @@
 #define printf vita_debug_log
 #endif
 
+extern void gs_sps_stop();
+
 void draw_streaming(vita2d_texture *frame_texture);
 void draw_fps();
 void draw_indicators();
@@ -95,7 +97,7 @@ typedef struct {
   bool plus;
 } indicator_status;
 
-static unsigned numframes;
+//static unsigned numframes;
 static bool active_video_thread = true;
 static bool active_pacer_thread = false;
 static indicator_status poor_net_indicator = {0};
@@ -183,14 +185,14 @@ static int vita_pacer_thread_main(SceSize args, void *argp) {
   //  max_fps /= 2;
   //}
   int max_fps = config.stream.fps;
-  uint64_t last_vblank_count = sceDisplayGetVcount();
+  //uint64_t last_vblank_count = sceDisplayGetVcount();
   uint64_t last_check_time = sceKernelGetSystemTimeWide();
   //float carry = 0;
   need_drop = 0;
   frame_count = 0;
   while (active_pacer_thread) {
-    uint64_t curr_vblank_count = sceDisplayGetVcount();
-    uint32_t vblank_fps = curr_vblank_count - last_vblank_count;
+    //uint64_t curr_vblank_count = sceDisplayGetVcount();
+    //uint32_t vblank_fps = curr_vblank_count - last_vblank_count;
     uint32_t curr_frame_count = frame_count;
     frame_count = 0;
 
@@ -212,7 +214,7 @@ static int vita_pacer_thread_main(SceSize args, void *argp) {
     curr_fps[0] = curr_frame_count;
     curr_fps[1] = max_fps;
 
-    last_vblank_count = curr_vblank_count;
+    //last_vblank_count = curr_vblank_count;
     uint64_t curr_check_time = sceKernelGetSystemTimeWide();
     uint32_t lapse = curr_check_time - last_check_time;
     last_check_time = curr_check_time;
@@ -395,7 +397,7 @@ static int vita_setup(int videoFormat, int width, int height, int redrawRate, vo
 
   if (video_status == INIT_DECODER_MEMBLOCK) {
     // INIT_AVC_DEC
-    printf("base: 0x%08x\n", decoder->frameBuf.pBuf);
+    printf("base: 0x%08x\n", (unsigned int)decoder->frameBuf.pBuf);
 
     ret = sceAvcdecCreateDecoder(SCE_VIDEODEC_TYPE_HW_AVCDEC, decoder, decoder_info);
     if (ret < 0) {

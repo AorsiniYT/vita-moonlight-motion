@@ -29,6 +29,8 @@
 #include "graphics.h"
 #include "input/vita.h"
 
+extern char* strdup(const char*);
+
 #include <psp2/kernel/sysmem.h>
 
 #define MOONLIGHT_PATH "/moonlight"
@@ -122,6 +124,7 @@ static int ini_handle(void *out, const char *section, const char *name,
     //  config->stream.enableHdr = BOOL(value);
     }
   }
+  return 0;
 }
 
 bool config_file_parse(char* filename, PCONFIGURATION config) {
@@ -210,8 +213,8 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->stream.packetSize = 1024;
   config->stream.streamingRemotely = 0;
   config->stream.audioConfiguration = AUDIO_CONFIGURATION_STEREO;
-  config->stream.supportsHevc = false;
-  config->stream.enableHdr = false;
+  config->stream.supportedVideoFormats = VIDEO_FORMAT_H264;
+  //config->stream.enableHdr = false; <-- likely to bite me in ass later
 
   config->platform = "vita";
   config->model = sceKernelGetModelForCDialog();
