@@ -24,6 +24,7 @@
 
 #include "debug.h"
 
+
 void vita_debug_log(const char *s, ...) {
   if (!config.save_debug_log) {
     return;
