@@ -76,12 +76,13 @@ static void vita_init() {
   ret = sceSysmoduleLoadModule(SCE_SYSMODULE_NET);
 
   if (ret < 0) {
-    printf("Could not load net module!");
+    
   }
 
-  size_t net_mem_sz = 200 * 1024;
-  SceNetInitParam net_param = {0};
-  net_param.memory = calloc(net_mem_sz, 1);
+  size_t net_mem_sz = 4 * 1024 * 1024;
+  SceNetInitParam net_param;
+  net_param.flags = 0;
+  net_param.memory = malloc(net_mem_sz);
   net_param.size = net_mem_sz;
   ret = sceNetInit(&net_param);
 
