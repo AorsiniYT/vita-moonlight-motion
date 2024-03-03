@@ -6,6 +6,7 @@
 #include "../config.h"
 #include "../input/vita.h"
 #include "../video/vita.h"
+#include "../debug.h"
 
 #include <assert.h>
 #include <stdarg.h>

@@ -29,22 +29,12 @@
 #include <ctype.h>
 
 #include "../graphics.h"
-#include "../config.h"
 #include "../connection.h"
+#include "../config.h"
 #include "vita.h"
 #include "mapping.h"
 
 #include <Limelight.h>
-
-#include <psp2/net/net.h>
-#include <psp2/sysmodule.h>
-#include <psp2/kernel/sysmem.h>
-#include <psp2/kernel/threadmgr.h>
-#include <psp2/motion.h>
-
-#include <psp2/ctrl.h>
-#include <psp2/touch.h>
-#include <psp2/rtc.h>
 
 #define WIDTH 960
 #define HEIGHT 544
@@ -63,22 +53,6 @@ typedef struct input_data {
     char  rt;
 } input_data;
 
-typedef struct Point {
-  short x;
-  short y;
-} Point;
-
-typedef struct Section {
-  Point left;
-  Point right;
-} Section;
-
-typedef struct TouchData {
-  short button;
-  short finger;
-  Point points[4];
-} TouchData;
-
 #define lerp(value, from_max, to_max) ((((value*10) * (to_max*10))/(from_max*10))/10)
 
 double mouse_multiplier;
@@ -86,7 +60,7 @@ double mouse_multiplier;
 #define MOUSE_ACTION_DELAY 100000 // 100ms
 #define MOTION_ACTION_DELAY 500000 // 400ms
 
-static inline bool mouse_click(short finger_count, bool press) {
+inline bool mouse_click(short finger_count, bool press) {
   int mode;
 
   if (press) {
@@ -106,7 +80,7 @@ static inline bool mouse_click(short finger_count, bool press) {
   return false;
 }
 
-static inline void move_mouse(TouchData old, TouchData cur) {
+inline void move_mouse(TouchData old, TouchData cur) {
   double delta_x = (cur.points[0].x - old.points[0].x) / 2.;
   double delta_y = (cur.points[0].y - old.points[0].y) / 2.;
 
@@ -120,7 +94,7 @@ static inline void move_mouse(TouchData old, TouchData cur) {
   LiSendMouseMoveEvent(x, y);
 }
 
-static inline void move_motion(SceMotionState motionState) {
+inline void move_motion(SceMotionState motionState) {
   // Get the mouse position.
   double delta_x = (deviceQuat_old.y-motionState.deviceQuat.y) * (float)MOUSE_SENSITIVITY;
   double delta_y = (deviceQuat_old.x-motionState.deviceQuat.x) * (float)MOUSE_SENSITIVITY;
@@ -135,7 +109,7 @@ static inline void move_motion(SceMotionState motionState) {
   LiSendMouseMoveEvent(x, y);
 }
 
-static inline void move_wheel(TouchData old, TouchData cur) {
+inline void move_wheel(TouchData old, TouchData cur) {
   int old_y = (old.points[0].y + old.points[1].y) / 2;
   int cur_y = (cur.points[0].y + cur.points[1].y) / 2;
   int delta_y = (cur_y - old_y) / 2;
@@ -177,7 +151,7 @@ static int HORIZONTAL;
 Section BACK_SECTIONS[4];
 Section FRONT_SECTIONS[4];
 
-static inline uint8_t read_backscreen() {
+inline uint8_t read_backscreen() {
   for (int i = 0; i < back.reportNum; i++) {
     int x = lerp(back.report[i].x, 1919, WIDTH);
     int y = lerp(back.report[i].y, 1087, HEIGHT);
@@ -214,7 +188,7 @@ static inline uint8_t read_backscreen() {
 }
 
 
-static inline uint8_t read_frontscreen() {
+inline uint8_t read_frontscreen() {
   for (int i = 0; i < front.reportNum; i++) {
     int x = lerp(front.report[i].x, 1919, WIDTH);
     int y = lerp(front.report[i].y, 1087, HEIGHT);
@@ -255,7 +229,7 @@ static inline uint8_t read_frontscreen() {
   return 0;
 }
 
-static inline uint32_t is_pressed(uint32_t defined) {
+inline uint32_t is_pressed(uint32_t defined) {
   uint32_t dev_type = defined & INPUT_TYPE_MASK;
   uint32_t dev_val  = defined & INPUT_VALUE_MASK;
 
@@ -268,7 +242,7 @@ static inline uint32_t is_pressed(uint32_t defined) {
   return 0;
 }
 
-static inline uint32_t is_old_pressed(uint32_t defined) {
+inline uint32_t is_old_pressed(uint32_t defined) {
   uint32_t dev_type = defined & INPUT_TYPE_MASK;
   uint32_t dev_val  = defined & INPUT_VALUE_MASK;
 
@@ -281,7 +255,7 @@ static inline uint32_t is_old_pressed(uint32_t defined) {
   return 0;
 }
 
-static inline short read_analog(uint32_t defined) {
+inline short read_analog(uint32_t defined) {
   uint32_t dev_type = defined & INPUT_TYPE_MASK;
   uint32_t dev_val  = defined & INPUT_VALUE_MASK;
 
@@ -313,7 +287,7 @@ static inline short read_analog(uint32_t defined) {
   return is_pressed(defined) ? 0xff : 0;
 }
 
-static inline void special(uint32_t defined, uint32_t pressed, uint32_t old_pressed) {
+inline void special(uint32_t defined, uint32_t pressed, uint32_t old_pressed) {
   uint32_t dev_type = defined & INPUT_TYPE_MASK;
   uint32_t dev_val  = defined & INPUT_VALUE_MASK;
 
@@ -375,7 +349,7 @@ float QuatLength(SceFQuaternion v1, SceFQuaternion v2) {
   return sqrt(x_diff * x_diff + y_diff * y_diff + z_diff * z_diff);
 }
 
-static inline void vitainput_process(void) {
+inline void vitainput_process(void) {
   memset(&pad, 0, sizeof(pad));
   memset(&touch, 0, sizeof(TouchData));
   memset(&curr, 0, sizeof(input_data));

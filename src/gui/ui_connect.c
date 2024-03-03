@@ -1,5 +1,6 @@
 #include "ui_connect.h"
 
+#include "Limelight.h"
 #include "guilib.h"
 #include "ime.h"
 
@@ -94,22 +95,10 @@ void ui_connect_stream(int appId) {
   if (ret == 0) {
     server.currentGame = appId;
   } else {
-    char *stage;
-    switch (connection_failed_stage) {
-      case STAGE_PLATFORM_INIT: stage = "Platform init"; break;
-      case STAGE_NAME_RESOLUTION: stage = "Name resolution"; break;
-      case STAGE_RTSP_HANDSHAKE: stage = "RTSP handshake"; break;
-      case STAGE_CONTROL_STREAM_INIT: stage = "Control stream init"; break;
-      case STAGE_VIDEO_STREAM_INIT: stage = "Video stream init"; break;
-      case STAGE_AUDIO_STREAM_INIT: stage = "Audio stream init"; break;
-      case STAGE_CONTROL_STREAM_START: stage = "Control stream start"; break;
-      case STAGE_VIDEO_STREAM_START: stage = "Video stream start"; break;
-      case STAGE_AUDIO_STREAM_START: stage = "Audio stream start"; break;
-      case STAGE_INPUT_STREAM_START: stage = "Input stream start"; break;
-    }
+    const char* stage = LiGetStageName(ret);
 
     display_error("Failed to start stream: error code %d\nFailed stage: %s\n(error code %d)",
-                  ret, stage, connection_failed_stage_code);
+                  ret, stage, connection_failed_stage_name);
     return;
   }
 }

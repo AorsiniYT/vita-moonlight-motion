@@ -40,3 +40,17 @@ void sort_app_list(PAPP_LIST list) {
         prev = cur;
     } while (swapped);
 }
+
+int ensure_buf_size(void **buf, size_t *buf_size, size_t required_size) {
+  if (*buf_size >= required_size)
+    return 0;
+
+  *buf_size = required_size;
+  *buf = realloc(*buf, *buf_size);
+  if (!*buf) {
+    fprintf(stderr, "Failed to allocate %zu bytes\n", *buf_size);
+    abort();
+  }
+
+  return 0;
+}

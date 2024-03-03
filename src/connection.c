@@ -18,6 +18,7 @@
  */
 
 #include "connection.h"
+#include "Limelight.h"
 #include "config.h"
 #include "power/vita.h"
 #include "input/vita.h"
@@ -31,8 +32,8 @@
 
 static int connection_status = LI_DISCONNECTED;
 
-int connection_failed_stage = 0;
-long connection_failed_stage_code = 0;
+char* connection_failed_stage_name = "";
+
 
 void pause_output() {
   vitainput_stop();
@@ -65,13 +66,32 @@ void connection_connection_started() {
   vitavideo_hide_poor_net_indicator();
 }
 
-void connection_connection_terminated() {
+static void connection_connection_terminated(int error_code) {
   if (connection_status != LI_PAIRED && connection_status != LI_CONNECTED &&
       connection_status != LI_MINIMIZED) {
     vita_debug_log("connection_connection_terminated error: %d\n", connection_status);
   }
 
-  LiStopConnection();
+  switch (error_code) {
+    case ML_ERROR_GRACEFUL_TERMINATION:
+      printf("Connection has been terminated gracefully.\n");
+      break;
+    case ML_ERROR_NO_VIDEO_TRAFFIC:
+      printf("No video received from host. Check the host PC's firewall and port forwarding rules.\n");
+      break;
+    case ML_ERROR_NO_VIDEO_FRAME:
+      printf("Your network connection isn't performing well. Reduce your video bitrate setting or try a faster connection.\n");
+      break;
+    case ML_ERROR_UNEXPECTED_EARLY_TERMINATION:
+      printf("The connection was unexpectedly terminated by the host due to a video capture error. Make sure no DRM-protected content is playing on the host.\n");
+      break;
+    case ML_ERROR_PROTECTED_CONTENT:
+      printf("The connection was terminated by the host due to DRM-protected content. Close any DRM-protected content on the host and try again.\n");
+      break;
+    default:
+      printf("Connection terminated with error: %d\n", error_code);
+      break;
+  }
 
   if (connection_status == LI_CONNECTED) {
     stop_output();
@@ -125,21 +145,23 @@ int connection_terminate() {
     vita_debug_log("connection_terminate error: %d\n", connection_status);
     return -1;
   }
-  connection_connection_terminated();
+  LiStopConnection();
+  //connection_connection_terminated(0);
   return 0;
 }
 
 void connection_stage_starting(int stage) {
-  vita_debug_log("connection_stage_starting - stage: %d\n", stage);
+  const char* connection_stage_name = LiGetStageName(stage);
+  vita_debug_log("connection_stage_starting - stage: %s\n", connection_stage_name);
 }
 void connection_stage_complate(int stage) {
-  vita_debug_log("connection_stage_complate - stage: %d\n", stage);
+  const char* connection_stage_name = LiGetStageName(stage);
+  vita_debug_log("connection_stage_complete - stage: %d\n", connection_stage_name);
 }
 
 void connection_stage_failed(int stage, int code) {
-  connection_failed_stage = stage;
-  connection_failed_stage_code = code;
-  vita_debug_log("connection_stage_failed - stage: %d, %d\n", stage, code);
+  connection_failed_stage_name = (char *) LiGetStageName(stage);
+  vita_debug_log("connection_stage_failed - stage: %s, %d\n", connection_failed_stage_name, code);
 }
 
 bool connection_is_ready() {

@@ -33,7 +33,7 @@ void gs_sps_init(int width, int height) {
 void gs_sps_stop() {
   if (h264_stream) {
     h264_free(h264_stream);
-    h264_stream = 0;
+    h264_stream = NULL;
   }
 }
 

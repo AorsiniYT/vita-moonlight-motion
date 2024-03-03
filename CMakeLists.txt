@@ -24,7 +24,7 @@ add_definitions(-DVERSION_MAJOR=${VERSION_MAJOR})
 add_definitions(-DVERSION_MINOR=${VERSION_MINOR})
 add_definitions(-DVERSION_PATCH=${VERSION_PATCH})
 
-set(CMAKE_C_FLAGS "-Wl,-q -g3 -std=c99 -D__vita__ -Dntohs=__builtin_bswap16 -Dhtons=__builtin_bswap16 -Dntohl=__builtin_bswap32 -Dhtonl=__builtin_bswap32 -DENET_DEBUG=1 -DNO_MSGAPI")
+set(CMAKE_C_FLAGS "-Wl,-q -g3 -std=c99 -D__vita__ -DENET_DEBUG")
 
 
 
@@ -123,6 +123,7 @@ add_executable(${PROJECT_NAME}.elf
 )
 
 target_link_libraries(${PROJECT_NAME}.elf
+	-lpthread
 	-lcrypto
 	-lexpat
 	-lcurl
@@ -131,6 +132,14 @@ target_link_libraries(${PROJECT_NAME}.elf
 	-lcrypto
 	-lopus
 	-lbz2
+	-lavcodec
+	-lavdevice
+	-lavfilter
+	-lavutil
+	-lavformat
+	-lpthread
+	-lmp3lame
+	-lswresample
 	-lSceDisplay_stub
 	-lSceCtrl_stub
 	-lSceTouch_stub

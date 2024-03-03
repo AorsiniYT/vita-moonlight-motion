@@ -21,6 +21,9 @@
 #include "../config.h"
 #include "../debug.h"
 #include "../gui/guilib.h"
+#include "../util.h"
+#include "openssl/buffer.h"
+#include "sys/_stdint.h"
 #include "vita.h"
 #include "sps.h"
 
@@ -59,7 +62,9 @@ enum {
   VITA_VIDEO_ERROR_CREATE_PACER_THREAD  = 0x80010007,
 };
 
-#define DECODER_BUFFER_SIZE (92 * 1024)
+#define DECODER_BUFFER_SIZE (256 * 1024)
+
+static size_t buffer_size = 0;
 
 static char* decoder_buffer = NULL;
 
@@ -303,7 +308,7 @@ static int vita_setup(int videoFormat, int width, int height, int redrawRate, vo
     // INIT_FRAMEBUFFER
     update_scaling_settings(width, height);
 
-    decoder_buffer = malloc(DECODER_BUFFER_SIZE);
+    ensure_buf_size((void *)&decoder_buffer, &buffer_size, DECODER_BUFFER_SIZE + 64);
     if (decoder_buffer == NULL) {
       printf("not enough memory\n");
       ret = VITA_VIDEO_ERROR_NO_MEM;
@@ -333,7 +338,7 @@ static int vita_setup(int videoFormat, int width, int height, int redrawRate, vo
     init->size = sizeof(SceVideodecQueryInitInfoHwAvcdec);
     init->horizontal = VITA_DECODER_RESOLUTION(width);
     init->vertical = VITA_DECODER_RESOLUTION(height);
-    init->numOfRefFrames = 5;
+    init->numOfRefFrames = 4;
     init->numOfStreams = 1;
 
     ret = sceVideodecInitLibrary(SCE_VIDEODEC_TYPE_HW_AVCDEC, init);
@@ -445,6 +450,11 @@ static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   picture.frame.frameWidth = image_scaling.texture_width;
   picture.frame.frameHeight = image_scaling.texture_height;
   picture.frame.pPicture[0] = vita2d_texture_get_datap(frame_texture);
+
+  uint32_t decoder_buffer_size = DECODER_BUFFER_SIZE;
+
+  ensure_buf_size((void *)&decoder_buffer, &decoder_buffer_size, decodeUnit->fullLength + 64);
+
 
   if (decodeUnit->fullLength >= DECODER_BUFFER_SIZE) {
     printf("Video decode buffer too small\n");
@@ -565,5 +575,6 @@ DECODER_RENDERER_CALLBACKS decoder_callbacks_vita = {
   .setup = vita_setup,
   .cleanup = vita_cleanup,
   .submitDecodeUnit = vita_submit_decode_unit,
-  .capabilities = CAPABILITY_SLICES_PER_FRAME(2) | CAPABILITY_DIRECT_SUBMIT,
+  .capabilities = CAPABILITY_DIRECT_SUBMIT,
+  //CAPABILITY_SLICES_PER_FRAME(2) |
 };

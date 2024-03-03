@@ -79,7 +79,7 @@ static void vita_init() {
     
   }
 
-  size_t net_mem_sz = 4 * 1024 * 1024;
+  size_t net_mem_sz = 8 * 1024 * 1024;
   SceNetInitParam net_param;
   net_param.flags = 0;
   net_param.memory = malloc(net_mem_sz);
@@ -88,7 +88,7 @@ static void vita_init() {
 
   ret = sceNetCtlInit();
   // TODO(xyz): cURL breaks when socket FD is too big, very hacky workaround below!
-  int s = sceNetSocket("", SCE_NET_AF_INET, SCE_NET_SOCK_STREAM, 0);
+  /* int s = sceNetSocket("", SCE_NET_AF_INET, SCE_NET_SOCK_STREAM, 0);
 
   sceNetSocketClose(s);
   if (s >= 20) {
@@ -98,7 +98,7 @@ static void vita_init() {
       c = sceNetSocket("", SCE_NET_AF_INET, SCE_NET_SOCK_STREAM, 0);
       sceNetSocketClose(c);
     } while (c >= 5);
-  }
+  } */
 }
 
 void loop_forever(void) {

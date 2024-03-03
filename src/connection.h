@@ -43,8 +43,8 @@ enum {
 };
 
 extern CONNECTION_LISTENER_CALLBACKS connection_callbacks;
-extern int connection_failed_stage;
-extern long connection_failed_stage_code;
+
+extern char* connection_failed_stage_name;
 
 int connection_reset();
 int connection_paired();

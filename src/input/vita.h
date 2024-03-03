@@ -17,6 +17,20 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdbool.h>
+#include <stdint.h>
+#include <psp2/net/net.h>
+#include <psp2/sysmodule.h>
+#include <psp2/kernel/sysmem.h>
+#include <psp2/kernel/threadmgr.h>
+#include <psp2/motion.h>
+
+#include <psp2/ctrl.h>
+#include <psp2/touch.h>
+#include <psp2/rtc.h>
+
+
+
 typedef enum {
   NO_TOUCH_ACTION = 0,
   ON_SCREEN_TOUCH,
@@ -60,8 +74,36 @@ enum {
   INPUT_SPECIAL_KEY_PAUSE
 };
 
+typedef struct Point {
+  short x;
+  short y;
+} Point;
+
+typedef struct Section {
+  Point left;
+  Point right;
+} Section;
+
+typedef struct TouchData {
+  short button;
+  short finger;
+  Point points[4];
+} TouchData;
+
 bool vitainput_init();
 void vitainput_config(CONFIGURATION config);
 
 void vitainput_start(void);
 void vitainput_stop(void);
+
+uint8_t read_backscreen();
+uint8_t read_frontscreen();
+uint32_t is_pressed(uint32_t defined);
+uint32_t is_old_pressed(uint32_t defined);
+short read_analog(uint32_t defined);
+void special(uint32_t defined, uint32_t pressed, uint32_t old_pressed);
+void vitainput_process(void);
+void move_mouse(TouchData old, TouchData cur);
+bool mouse_click(short finger_count, bool press);
+void move_motion(SceMotionState motionState);
+void move_wheel(TouchData old, TouchData cur);
