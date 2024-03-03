@@ -74,24 +74,25 @@ static void connection_connection_terminated(int error_code) {
 
   switch (error_code) {
     case ML_ERROR_GRACEFUL_TERMINATION:
-      printf("Connection has been terminated gracefully.\n");
       break;
     case ML_ERROR_NO_VIDEO_TRAFFIC:
-      printf("No video received from host. Check the host PC's firewall and port forwarding rules.\n");
+      vita_debug_log("No video received from host. Check the host PC's firewall and port forwarding rules.\n");
       break;
     case ML_ERROR_NO_VIDEO_FRAME:
-      printf("Your network connection isn't performing well. Reduce your video bitrate setting or try a faster connection.\n");
+      vita_debug_log("Your network connection isn't performing well. Reduce your video bitrate setting or try a faster connection.\n");
       break;
     case ML_ERROR_UNEXPECTED_EARLY_TERMINATION:
-      printf("The connection was unexpectedly terminated by the host due to a video capture error. Make sure no DRM-protected content is playing on the host.\n");
+      vita_debug_log("The connection was unexpectedly terminated by the host due to a video capture error. Make sure no DRM-protected content is playing on the host.\n");
       break;
     case ML_ERROR_PROTECTED_CONTENT:
-      printf("The connection was terminated by the host due to DRM-protected content. Close any DRM-protected content on the host and try again.\n");
+      vita_debug_log("The connection was terminated by the host due to DRM-protected content. Close any DRM-protected content on the host and try again.\n");
       break;
     default:
-      printf("Connection terminated with error: %d\n", error_code);
+      vita_debug_log("Connection terminated with error: %d\n", error_code);
       break;
   }
+
+  LiStopConnection();
 
   if (connection_status == LI_CONNECTED) {
     stop_output();
@@ -145,8 +146,7 @@ int connection_terminate() {
     vita_debug_log("connection_terminate error: %d\n", connection_status);
     return -1;
   }
-  LiStopConnection();
-  //connection_connection_terminated(0);
+  connection_connection_terminated(0);
   return 0;
 }
 

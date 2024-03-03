@@ -456,7 +456,7 @@ static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   ensure_buf_size((void *)&decoder_buffer, &decoder_buffer_size, decodeUnit->fullLength + 64);
 
 
-  if (decodeUnit->fullLength >= DECODER_BUFFER_SIZE) {
+  if (decodeUnit->fullLength >= DECODER_BUFFER_SIZE + 64) {
     printf("Video decode buffer too small\n");
     exit(1);
   }
