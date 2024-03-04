@@ -173,6 +173,7 @@ void config_save(const char* filename, PCONFIGURATION config) {
   write_config_bool(fd, "enable_ref_frame_invalidation", config->enable_ref_frame_invalidation);
   write_config_int(fd, "enable_remote_stream_optimization", config->stream.streamingRemotely);
   write_config_bool(fd, "enable_vita_vblank_wait", config->enable_vita_vblank_wait);
+  write_config_bool(fd, "enable_motion_controls", config->enable_motion_controls);
   //write_config_bool(fd, "enable_hdr", config->stream.enableHdr);
 
   write_config_section(fd, "backtouchscreen_deadzone");

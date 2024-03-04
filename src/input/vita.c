@@ -31,6 +31,9 @@
 #include "../graphics.h"
 #include "../connection.h"
 #include "../config.h"
+#include "psp2/kernel/threadmgr/thread.h"
+#include "psp2common/types.h"
+#include "sys/_stdint.h"
 #include "vita.h"
 #include "mapping.h"
 
@@ -39,6 +42,26 @@
 #define WIDTH 960
 #define HEIGHT 544
 #define MOUSE_SENSITIVITY 2400.0
+
+const short Y_MAXIMIUM_DEADZONE = 31359;
+const short Y_MINIMUM_DEADZONE = 641;
+
+//could put this in header?
+typedef struct double_click_tracker {
+  bool y_max_once;
+  uint64_t y_max_once_time;
+  bool returned_to_center;
+  uint64_t returned_to_center_time;
+  bool currently_sprinting;
+} double_click_tracker;
+
+static double_click_tracker dc_tracker = {
+  .y_max_once = false,
+  .y_max_once_time = 0,
+  .returned_to_center = false,
+  .returned_to_center_time = 0,
+  .currently_sprinting = false
+};
 
 struct mapping map = {0};
 SceFQuaternion deviceQuat_old = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -355,7 +378,9 @@ inline void vitainput_process(void) {
   memset(&curr, 0, sizeof(input_data));
   sceCtrlSetSamplingModeExt(SCE_CTRL_MODE_ANALOG_WIDE);
   sceCtrlPeekBufferPositiveExt2(controller_port, &pad, 1);
-  sceMotionGetState(&motionState);
+  if (config.enable_motion_controls) {
+    sceMotionGetState(&motionState);
+  }
   sceTouchPeek(SCE_TOUCH_PORT_FRONT, &front, 1);
   sceTouchPeek(SCE_TOUCH_PORT_BACK, &back, 1);
   read_frontscreen();
@@ -401,25 +426,65 @@ inline void vitainput_process(void) {
           is_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SE),
           is_old_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SE));
 
-  //Resetting motion causes downwards jerk temporary code to prevent
-  if(sceRtcCompareTick(&current, &until) > 0 && !_calibrateGyro){
-    move_motion(motionState);
-  }
-
-  if((is_pressed(map.btn_tl))){
-    if(_calibrateGyro){
-      sceMotionReset();
-      sceRtcTickAddMicroseconds(&until, &current, MOTION_ACTION_DELAY);
-      _motionResetCount = 1;
+  if (config.enable_motion_controls) {
+    //Resetting motion causes downwards jerk temporary code to prevent
+    if(sceRtcCompareTick(&current, &until) > 0 && !_calibrateGyro){
+      move_motion(motionState);
     }
-    _calibrateGyro = false;
-  }else{
-    _calibrateGyro = true;
-    _motionCalibrated = false;
-    _motionResetCount = 0;
+
+    if((is_pressed(map.btn_tl))){
+      if(_calibrateGyro){
+        sceMotionReset();
+        sceRtcTickAddMicroseconds(&until, &current, MOTION_ACTION_DELAY);
+        _motionResetCount = 1;
+      }
+      _calibrateGyro = false;
+    }else{
+      _calibrateGyro = true;
+      _motionCalibrated = false;
+      _motionResetCount = 0;
+    }
+    memcpy(&deviceQuat_old, &motionState.deviceQuat, sizeof(struct SceFQuaternion));
+  }
+  
+  //TODO: Wrap in function and add config to toggle
+
+  //Condition 1: Y is maximum
+  if (curr.ly > Y_MAXIMIUM_DEADZONE) {
+    dc_tracker.y_max_once = true;
+    //stamp time
+    dc_tracker.y_max_once_time = sceKernelGetSystemTimeWide();
   }
 
-  memcpy(&deviceQuat_old, &motionState.deviceQuat, sizeof(struct SceFQuaternion));
+  //Condition 2: Y is minimum and less than 100ms has passed
+  if (dc_tracker.y_max_once && curr.ly < Y_MINIMUM_DEADZONE) {
+    uint64_t current_time = sceKernelGetSystemTimeWide();
+    if (current_time - dc_tracker.y_max_once < 100000) {
+      dc_tracker.returned_to_center = true;
+      dc_tracker.returned_to_center_time = sceKernelGetSystemTimeWide();
+    } else {
+      dc_tracker.y_max_once = false;
+    }
+  }
+
+  //Condition 3: Y is maximium and condition 2 passed
+  if (dc_tracker.returned_to_center && curr.ly > Y_MAXIMIUM_DEADZONE) {
+    uint64_t current_time = sceKernelGetSystemTimeWide();
+    if (current_time - dc_tracker.returned_to_center_time < 100000) {
+      dc_tracker.currently_sprinting = true;
+      dc_tracker.y_max_once = false;
+      dc_tracker.returned_to_center = false;
+    }
+  }
+
+  //Y is now minimum and we're done sprinting
+  if (dc_tracker.currently_sprinting && curr.ly < Y_MINIMUM_DEADZONE) {
+    dc_tracker.currently_sprinting = false;
+  }
+
+  if (dc_tracker.currently_sprinting) {
+    curr.button |= LS_CLK_FLAG;
+  }
 
   // mouse
   switch (front_state) {
@@ -495,7 +560,7 @@ int vitainput_thread(SceSize args, void *argp) {
       vitainput_process();
     }
 
-    sceKernelDelayThread(5000); // 5 ms
+    sceKernelDelayThread(2000); // 2 ms
   }
 
   return 0;

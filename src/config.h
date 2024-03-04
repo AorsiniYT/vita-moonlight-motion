@@ -70,6 +70,7 @@ typedef struct _CONFIGURATION {
   int mouse_acceleration;
   bool enable_ref_frame_invalidation;
   bool enable_vita_vblank_wait;
+  bool enable_motion_controls; //Metalface
   FILE *log_file;
   // runtime configuration, value will be recreated at launch
   SceCtrlButtons btn_confirm;

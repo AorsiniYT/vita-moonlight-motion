@@ -492,6 +492,8 @@ static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
     return DR_OK;
   }
 
+  //TODO: Seems silly to decode the unit if we're going to drop the frame?
+  // Find out why we decode or if we even need to
   if (active_video_thread) {
     if (need_drop > 0) {
       vita_debug_log("remain frameskip: %d\n", need_drop);
@@ -576,5 +578,5 @@ DECODER_RENDERER_CALLBACKS decoder_callbacks_vita = {
   .cleanup = vita_cleanup,
   .submitDecodeUnit = vita_submit_decode_unit,
   .capabilities = CAPABILITY_DIRECT_SUBMIT,
-  //CAPABILITY_SLICES_PER_FRAME(2) |
+  //CAPABILITY_SLICES_PER_FRAME(2) | TODO: Add back after stability testing
 };

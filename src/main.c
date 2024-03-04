@@ -90,7 +90,8 @@ static void vita_init() {
 
   ret = sceNetCtlInit();
   // TODO(xyz): cURL breaks when socket FD is too big, very hacky workaround below!
-  /* int s = sceNetSocket("", SCE_NET_AF_INET, SCE_NET_SOCK_STREAM, 0);
+  // Not really sure of any other way to make the socket FD smaller... --Metalface
+  int s = sceNetSocket("", SCE_NET_AF_INET, SCE_NET_SOCK_STREAM, 0);
 
   sceNetSocketClose(s);
   if (s >= 20) {
@@ -100,7 +101,7 @@ static void vita_init() {
       c = sceNetSocket("", SCE_NET_AF_INET, SCE_NET_SOCK_STREAM, 0);
       sceNetSocketClose(c);
     } while (c >= 5);
-  } */
+  }
 }
 
 void loop_forever(void) {
