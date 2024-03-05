@@ -1,8 +1,11 @@
 #include "util.h"
+#include "debug.h"
 
-#include<string.h>
-#include<stdio.h>
-#include<stdlib.h>
+
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
 
 void swap_app_list_entries(PAPP_LIST a, PAPP_LIST b) {
     PAPP_LIST tmp = malloc(sizeof(APP_LIST));

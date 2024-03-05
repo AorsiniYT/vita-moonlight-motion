@@ -13,6 +13,7 @@
 #include "../video/vita.h"
 #include "../input/vita.h"
 #include "../power/vita.h"
+#include "../util.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -24,6 +25,8 @@
 
 #include <psp2/kernel/threadmgr.h>
 #include <psp2/ctrl.h>
+
+extern SceNetInitParam net_param;
 
 enum {
   MAIN_MENU_CONNECTED = 100,

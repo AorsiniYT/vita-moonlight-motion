@@ -22,6 +22,7 @@
 #include "connection.h"
 #include "configuration.h"
 #include "audio.h"
+#include "psp2/net/netctl.h"
 #include "video.h"
 #include "discover.h"
 #include "config.h"
@@ -40,12 +41,13 @@
 #include <openssl/rand.h>
 #include <openssl/evp.h>
 #include <ctype.h>
+#include "curl/curl.h"
 
 #include <psp2/kernel/rng.h>
 #include <psp2/kernel/threadmgr.h>
 
 #include <psp2/net/net.h>
-#include <psp2/net/netctl.h>
+
 
 #include <psp2/io/stat.h>
 
@@ -54,12 +56,25 @@
 #include <psp2/touch.h>
 #include <psp2/rtc.h>
 
-
-
 #include "graphics.h"
 #include "device.h"
 #include "gui/ui.h"
+#include "util.h"
 #include "power/vita.h"
+
+#define VITA_NET_MEM_SIZE 1 * 1024 * 1024
+
+SceNetInitParam net_param = {
+  .memory = NULL,
+  .size = VITA_NET_MEM_SIZE,
+  .flags = 0
+};
+
+void loop_forever(void) {
+  while (connection_is_ready()) {
+    sceKernelDelayThread(100 * 1000);
+  }
+}
 
 static void vita_init() {
   // Seed OpenSSL with Sony-grade random number generator
@@ -73,42 +88,38 @@ static void vita_init() {
 
   printf("Vita Moonlight %d.%d.%d (%s)\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, COMPILE_OPTIONS);
 
-  int ret = 0;
+  int ret;
 
+  // Load Vita network 
+  net_param.memory = malloc(net_param.size);
+  if (net_param.memory == NULL) {
+    printf("Could not allocate net memory!");
+    loop_forever();
+  }
+ 
   ret = sceSysmoduleLoadModule(SCE_SYSMODULE_NET);
-
   if (ret < 0) {
-    
+    printf("Net module was unable to load!");
+    loop_forever();
   }
 
-  size_t net_mem_sz = 8 * 1024 * 1024;
-  SceNetInitParam net_param;
-  net_param.flags = 0;
-  net_param.memory = malloc(net_mem_sz);
-  net_param.size = net_mem_sz;
   ret = sceNetInit(&net_param);
-
+  if (ret < 0) {
+    printf("Net init failed!");
+    loop_forever();
+  }
+  
   ret = sceNetCtlInit();
-  // TODO(xyz): cURL breaks when socket FD is too big, very hacky workaround below!
-  // Not really sure of any other way to make the socket FD smaller... --Metalface
-  int s = sceNetSocket("", SCE_NET_AF_INET, SCE_NET_SOCK_STREAM, 0);
+  if (ret < 0) {
+    printf("Net Ctl init failed!");
+  }
 
-  sceNetSocketClose(s);
-  if (s >= 20) {
-    printf("Cycling sockets...\n");
-    int c = 0;
-    do {
-      c = sceNetSocket("", SCE_NET_AF_INET, SCE_NET_SOCK_STREAM, 0);
-      sceNetSocketClose(c);
-    } while (c >= 5);
+  ret = curl_global_init(CURL_GLOBAL_ALL);
+  if (ret < 0) {
+    printf("CURL init failed!");
   }
 }
 
-void loop_forever(void) {
-  while (connection_is_ready()) {
-    sceKernelDelayThread(100 * 1000);
-  }
-}
 
 int main(int argc, char* argv[]) {
   psvDebugScreenInit();

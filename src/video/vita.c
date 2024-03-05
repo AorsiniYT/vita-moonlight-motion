@@ -41,7 +41,7 @@
 
 #include <stdarg.h>
 
-#if 0
+#if 1
 #define printf vita_debug_log
 #endif
 
@@ -62,11 +62,13 @@ enum {
   VITA_VIDEO_ERROR_CREATE_PACER_THREAD  = 0x80010007,
 };
 
-#define DECODER_BUFFER_SIZE (256 * 1024)
+#define DECODER_BUFFER_SIZE (128 * 1024)
 
-static size_t buffer_size = 0;
+#define AV_INPUT_BUFFER_PADDING_SIZE 64
 
 static char* decoder_buffer = NULL;
+
+static size_t decoder_buffer_size = 0;
 
 enum {
   SCREEN_WIDTH = 960,
@@ -308,16 +310,17 @@ static int vita_setup(int videoFormat, int width, int height, int redrawRate, vo
     // INIT_FRAMEBUFFER
     update_scaling_settings(width, height);
 
-    ensure_buf_size((void *)&decoder_buffer, &buffer_size, DECODER_BUFFER_SIZE + 64);
+    decoder_buffer_size = DECODER_BUFFER_SIZE + AV_INPUT_BUFFER_PADDING_SIZE;
+    decoder_buffer = malloc(decoder_buffer_size);
     if (decoder_buffer == NULL) {
-      printf("not enough memory\n");
+      printf("decoder_buffer: not enough memory\n");
       ret = VITA_VIDEO_ERROR_NO_MEM;
       goto cleanup;
-    }
+    } 
 
     frame_texture = vita2d_create_empty_texture_format(image_scaling.texture_width, image_scaling.texture_height, SCE_GXM_TEXTURE_FORMAT_U8U8U8U8_ABGR);
     if (frame_texture == NULL) {
-      printf("not enough memory\n");
+      printf("frame_texture: not enough memory\n");
       ret = VITA_VIDEO_ERROR_NO_MEM;
       goto cleanup;
     }
@@ -330,7 +333,7 @@ static int vita_setup(int videoFormat, int width, int height, int redrawRate, vo
     if (init == NULL) {
       init = calloc(1, sizeof(SceVideodecQueryInitInfoHwAvcdec));
       if (init == NULL) {
-        printf("not enough memory\n");
+        printf("init_framebuffer: not enough memory\n");
         ret = VITA_VIDEO_ERROR_NO_MEM;
         goto cleanup;
       }
@@ -355,7 +358,7 @@ static int vita_setup(int videoFormat, int width, int height, int redrawRate, vo
     if (decoder_info == NULL) {
       decoder_info = calloc(1, sizeof(SceAvcdecQueryDecoderInfo));
       if (decoder_info == NULL) {
-        printf("not enough memory\n");
+        printf("decoder_info: not enough memory\n");
         ret = VITA_VIDEO_ERROR_NO_MEM;
         goto cleanup;
       }
@@ -451,15 +454,23 @@ static int vita_submit_decode_unit(PDECODE_UNIT decodeUnit) {
   picture.frame.frameHeight = image_scaling.texture_height;
   picture.frame.pPicture[0] = vita2d_texture_get_datap(frame_texture);
 
-  uint32_t decoder_buffer_size = DECODER_BUFFER_SIZE;
+  //ensure_buf_size((void *)&decoder_buffer, &decoder_buffer_size, decodeUnit->fullLength + 64);
 
-  ensure_buf_size((void *)&decoder_buffer, &decoder_buffer_size, decodeUnit->fullLength + 64);
+  if (decoder_buffer_size < (decodeUnit->fullLength + AV_INPUT_BUFFER_PADDING_SIZE)) {
+    printf("Reallocating decoder buffer to %u bytes", (size_t)decodeUnit->fullLength + AV_INPUT_BUFFER_PADDING_SIZE);
+    decoder_buffer = realloc(decoder_buffer, decodeUnit->fullLength + AV_INPUT_BUFFER_PADDING_SIZE);
+    decoder_buffer_size = decodeUnit->fullLength+AV_INPUT_BUFFER_PADDING_SIZE;
+    if (decoder_buffer == NULL) {
+      printf("Out of memory! could not reallocate buffer!!");
+      exit(1);
+    }
+  }
 
 
-  if (decodeUnit->fullLength >= DECODER_BUFFER_SIZE + 64) {
+/*   if (decodeUnit->fullLength >= DECODER_BUFFER_SIZE + 64) {
     printf("Video decode buffer too small\n");
     exit(1);
-  }
+  } */
 
   PLENTRY entry = decodeUnit->bufferList;
   uint32_t length = 0;

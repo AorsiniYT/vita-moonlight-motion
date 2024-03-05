@@ -403,6 +403,7 @@ enum {
   SETTINGS_ENABLE_STREAM_OPTIMIZE,
   SETTINGS_ENABLE_VITA_VBLANK_WAIT,
   SETTINGS_ENABLE_MOTION_CONTROLS, //Metalface
+  SETTINGS_ENABLE_DOUBLE_TAP_SPRINT, //Metalface
   SETTINGS_SAVE_DEBUG_LOG,
   SETTINGS_DISABLE_POWERSAVE,
   SETTINGS_JP_LAYOUT,
@@ -424,7 +425,8 @@ enum {
   SETTINGS_VIEW_ENABLE_FRAME_INVAL,
   SETTINGS_VIEW_ENABLE_STREAM_OPTIMIZE,
   SETTINGS_VIEW_ENABLE_VITA_VBLANK_WAIT,
-  SETTINGS_VIEW_ENABLE_MOTION_CONTROLS,
+  SETTINGS_VIEW_ENABLE_MOTION_CONTROLS, //Metalface
+  SETTINGS_VIEW_ENABLE_DOUBLE_TAP_SPRINT, //Metalface
   SETTINGS_VIEW_SAVE_DEBUG_LOG,
   SETTINGS_VIEW_DISABLE_POWERSAVE,
   SETTINGS_VIEW_JP_LAYOUT,
@@ -581,6 +583,13 @@ static int settings_loop(int id, void *context, const input_data *input) {
       did_change = 1;
       config.enable_motion_controls = config.enable_motion_controls ? 0 : 1;
       break;
+    case SETTINGS_ENABLE_DOUBLE_TAP_SPRINT:
+      if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
+          break;
+      }
+      did_change = 1;
+      config.enable_double_tap_sprint = config.enable_double_tap_sprint ? 0 : 1;
+      break;
     //Metalface--
     case SETTINGS_SAVE_DEBUG_LOG:
       if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
@@ -711,6 +720,9 @@ static int settings_loop(int id, void *context, const input_data *input) {
   //Metalface
   sprintf(current, "%s", config.enable_motion_controls ? "yes" : "no");
   MENU_REPLACE(SETTINGS_VIEW_ENABLE_MOTION_CONTROLS, current);
+
+  sprintf(current, "%s", config.enable_double_tap_sprint ? "yes" : "no");
+  MENU_REPLACE(SETTINGS_VIEW_ENABLE_DOUBLE_TAP_SPRINT, current);
   //Metalface
 
   sprintf(current, "%s", config.disable_powersave ? "yes" : "no");
@@ -794,6 +806,7 @@ int ui_settings_menu() {
 
   MENU_CATEGORY("Input");
   MENU_ENTRY(SETTINGS_ENABLE_MOTION_CONTROLS, SETTINGS_VIEW_ENABLE_MOTION_CONTROLS, "Enable motion controls (L)", "");
+  MENU_ENTRY(SETTINGS_ENABLE_DOUBLE_TAP_SPRINT, SETTINGS_VIEW_ENABLE_DOUBLE_TAP_SPRINT, "Enable double tap to sprint", "");
   MENU_ENTRY(SETTINGS_MOUSE_ACCEL, SETTINGS_VIEW_MOUSE_ACCEL, "Mouse acceleration", ICON_LEFT_RIGHT_ARROWS);
   MENU_ENTRY(SETTINGS_ENABLE_MAPPING, SETTINGS_VIEW_ENABLE_MAPPING, "Enable mapping file", "");
   MENU_MESSAGE("Located at ux0:data/moonlight/mappings/vita.conf");

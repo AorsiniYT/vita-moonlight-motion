@@ -120,8 +120,10 @@ static int ini_handle(void *out, const char *section, const char *name,
       config->stream.streamingRemotely = INT(value);
     } else if (strcmp(name, "enable_vita_vblank_wait") == 0) {
       config->enable_vita_vblank_wait = BOOL(value);
-    //} else if (strcmp(name, "enable_hdr") == 0) {
-    //  config->stream.enableHdr = BOOL(value);
+    } else if (strcmp(name, "enable_motion_controls") == 0) {
+      config->enable_motion_controls = BOOL(value);
+    } else if (strcmp(name, "enable_double_tap_sprint") == 0) {
+      config->enable_double_tap_sprint = BOOL(value);
     }
   }
   return 0;
@@ -174,6 +176,7 @@ void config_save(const char* filename, PCONFIGURATION config) {
   write_config_int(fd, "enable_remote_stream_optimization", config->stream.streamingRemotely);
   write_config_bool(fd, "enable_vita_vblank_wait", config->enable_vita_vblank_wait);
   write_config_bool(fd, "enable_motion_controls", config->enable_motion_controls);
+  write_config_bool(fd, "enable_double_tap_sprint", config->enable_double_tap_sprint);
   //write_config_bool(fd, "enable_hdr", config->stream.enableHdr);
 
   write_config_section(fd, "backtouchscreen_deadzone");
@@ -215,7 +218,6 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->stream.streamingRemotely = 0;
   config->stream.audioConfiguration = AUDIO_CONFIGURATION_STEREO;
   config->stream.supportedVideoFormats = VIDEO_FORMAT_H264;
-  //config->stream.enableHdr = false; <-- likely to bite me in ass later
 
   config->platform = "vita";
   config->model = sceKernelGetModelForCDialog();
@@ -242,6 +244,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->mouse_acceleration = 150;
   config->enable_ref_frame_invalidation = false;
   config->enable_vita_vblank_wait = false;
+  config->enable_double_tap_sprint = false;
 
   config->inputsCount = 0;
   config->mapping = NULL;

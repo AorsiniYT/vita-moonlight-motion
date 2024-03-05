@@ -31,6 +31,7 @@
 #include "../graphics.h"
 #include "../connection.h"
 #include "../config.h"
+#include "../debug.h"
 #include "psp2/kernel/threadmgr/thread.h"
 #include "psp2common/types.h"
 #include "sys/_stdint.h"
@@ -43,8 +44,10 @@
 #define HEIGHT 544
 #define MOUSE_SENSITIVITY 2400.0
 
-const short Y_MAXIMIUM_DEADZONE = 31359;
-const short Y_MINIMUM_DEADZONE = 641;
+const  short Y_MAXIMIUM_DEADZONE = -32383;
+const  short Y_MINIMUM_DEADZONE = -512;
+
+const uint32_t DOUBLECLICK_STEP_TIME = 400000;
 
 //could put this in header?
 typedef struct double_click_tracker {
@@ -55,7 +58,7 @@ typedef struct double_click_tracker {
   bool currently_sprinting;
 } double_click_tracker;
 
-static double_click_tracker dc_tracker = {
+double_click_tracker dc_tracker = {
   .y_max_once = false,
   .y_max_once_time = 0,
   .returned_to_center = false,
@@ -75,6 +78,8 @@ typedef struct input_data {
     char  lt;
     char  rt;
 } input_data;
+
+void check_for_double_click(input_data *curr);
 
 #define lerp(value, from_max, to_max) ((((value*10) * (to_max*10))/(from_max*10))/10)
 
@@ -372,6 +377,74 @@ float QuatLength(SceFQuaternion v1, SceFQuaternion v2) {
   return sqrt(x_diff * x_diff + y_diff * y_diff + z_diff * z_diff);
 }
 
+inline void check_for_double_click(input_data *curr) {
+//can uncomment this if I ever need to debug this
+//#define DOUBLETAP_DEBUG
+//Condition 1: Y is maximum
+  if (curr->ly < Y_MAXIMIUM_DEADZONE && !dc_tracker.y_max_once && !dc_tracker.currently_sprinting) {
+    #ifdef DOUBLETAP_DEBUG
+    vita_debug_log("Condition one triggered, current Y: %d", curr.ly);
+    #endif
+    dc_tracker.y_max_once = true;  
+    dc_tracker.y_max_once_time = sceKernelGetSystemTimeWide();
+    #ifdef DOUBLETAP_DEBUG
+    vita_debug_log("Stamping y_max_once_time at: %llu", dc_tracker.y_max_once_time);
+    #endif
+  }
+
+  //Condition 2: Y is minimum and less than 100ms has passed
+  if (dc_tracker.y_max_once && curr->ly > Y_MINIMUM_DEADZONE && !dc_tracker.returned_to_center && !dc_tracker.currently_sprinting) {
+    #ifdef DOUBLETAP_DEBUG
+    vita_debug_log("Condition two triggered, current Y: %d", curr.ly);
+    #endif
+    uint64_t current_time = sceKernelGetSystemTimeWide();
+    if ((current_time - dc_tracker.y_max_once_time) < DOUBLECLICK_STEP_TIME) {
+      #ifdef DOUBLETAP_DEBUG
+      vita_debug_log("Condition two: Y max once was less than step time, delta: %llu", current_time-dc_tracker.y_max_once_time);
+      #endif
+      dc_tracker.returned_to_center = true;
+      dc_tracker.returned_to_center_time = sceKernelGetSystemTimeWide();
+      #ifdef DOUBLETAP_DEBUG
+      vita_debug_log("Condition two: Stamping returned_to_center_time at: %llu", dc_tracker.returned_to_center_time);
+      #endif
+    } else {
+      #ifdef DOUBLETAP_DEBUG
+      vita_debug_log("Condition two: Y Max once was more than step time, delta: %llu", current_time-dc_tracker.y_max_once_time);
+      #endif
+      dc_tracker.y_max_once = false;
+    }
+  }
+
+  //Condition 3: Y is maximium and condition 2 passed
+  if (dc_tracker.returned_to_center && curr->ly < Y_MAXIMIUM_DEADZONE && !dc_tracker.currently_sprinting) {
+    #ifdef DOUBLETAP_DEBUG
+    vita_debug_log("Condition three triggered, current Y: %d", curr.ly);
+    #endif
+    uint64_t current_time = sceKernelGetSystemTimeWide();
+    dc_tracker.y_max_once = false;
+    dc_tracker.returned_to_center = false;
+    if ((current_time - dc_tracker.returned_to_center_time) < DOUBLECLICK_STEP_TIME) {
+      #ifdef DOUBLETAP_DEBUG
+      vita_debug_log("Condition three: return to center was less than step time, delta: %llu", current_time - dc_tracker.returned_to_center_time);
+      vita_debug_log("Should be sprinting");
+      #endif
+      dc_tracker.currently_sprinting = true;
+    }
+  }
+
+  //Y is now minimum and we're done sprinting
+  if (dc_tracker.currently_sprinting && curr->ly > Y_MINIMUM_DEADZONE) {
+    #ifdef DOUBLETAP_DEBUG
+    vita_debug_log("We stopped sprinting");
+    #endif
+    dc_tracker.currently_sprinting = false;
+  }
+
+  if (dc_tracker.currently_sprinting) {
+    curr->button |= LS_CLK_FLAG;
+  }
+}
+
 inline void vitainput_process(void) {
   memset(&pad, 0, sizeof(pad));
   memset(&touch, 0, sizeof(TouchData));
@@ -446,44 +519,9 @@ inline void vitainput_process(void) {
     }
     memcpy(&deviceQuat_old, &motionState.deviceQuat, sizeof(struct SceFQuaternion));
   }
-  
-  //TODO: Wrap in function and add config to toggle
 
-  //Condition 1: Y is maximum
-  if (curr.ly > Y_MAXIMIUM_DEADZONE) {
-    dc_tracker.y_max_once = true;
-    //stamp time
-    dc_tracker.y_max_once_time = sceKernelGetSystemTimeWide();
-  }
-
-  //Condition 2: Y is minimum and less than 100ms has passed
-  if (dc_tracker.y_max_once && curr.ly < Y_MINIMUM_DEADZONE) {
-    uint64_t current_time = sceKernelGetSystemTimeWide();
-    if (current_time - dc_tracker.y_max_once < 100000) {
-      dc_tracker.returned_to_center = true;
-      dc_tracker.returned_to_center_time = sceKernelGetSystemTimeWide();
-    } else {
-      dc_tracker.y_max_once = false;
-    }
-  }
-
-  //Condition 3: Y is maximium and condition 2 passed
-  if (dc_tracker.returned_to_center && curr.ly > Y_MAXIMIUM_DEADZONE) {
-    uint64_t current_time = sceKernelGetSystemTimeWide();
-    if (current_time - dc_tracker.returned_to_center_time < 100000) {
-      dc_tracker.currently_sprinting = true;
-      dc_tracker.y_max_once = false;
-      dc_tracker.returned_to_center = false;
-    }
-  }
-
-  //Y is now minimum and we're done sprinting
-  if (dc_tracker.currently_sprinting && curr.ly < Y_MINIMUM_DEADZONE) {
-    dc_tracker.currently_sprinting = false;
-  }
-
-  if (dc_tracker.currently_sprinting) {
-    curr.button |= LS_CLK_FLAG;
+  if (config.enable_double_tap_sprint) {
+    check_for_double_click(&curr);
   }
 
   // mouse

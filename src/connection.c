@@ -32,8 +32,7 @@
 
 static int connection_status = LI_DISCONNECTED;
 
-char* connection_failed_stage_name = "";
-
+int connection_stage = 0;
 
 void pause_output() {
   vitainput_stop();
@@ -151,17 +150,20 @@ int connection_terminate() {
 }
 
 void connection_stage_starting(int stage) {
+  connection_stage = stage;
   const char* connection_stage_name = LiGetStageName(stage);
   vita_debug_log("connection_stage_starting - stage: %s\n", connection_stage_name);
 }
 void connection_stage_complate(int stage) {
+  connection_stage = stage;
   const char* connection_stage_name = LiGetStageName(stage);
-  vita_debug_log("connection_stage_complete - stage: %d\n", connection_stage_name);
+  vita_debug_log("connection_stage_complete - stage: %s\n", connection_stage_name);
 }
 
 void connection_stage_failed(int stage, int code) {
-  connection_failed_stage_name = (char *) LiGetStageName(stage);
-  vita_debug_log("connection_stage_failed - stage: %s, %d\n", connection_failed_stage_name, code);
+  connection_stage = stage;
+  const char* connection_stage_name = LiGetStageName(stage);
+  vita_debug_log("connection_stage_failed - stage: %s, %d\n", connection_stage_name, code);
 }
 
 bool connection_is_ready() {

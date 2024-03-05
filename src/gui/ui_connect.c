@@ -1,9 +1,11 @@
 #include "ui_connect.h"
 
 #include "Limelight.h"
+#include "errors.h"
 #include "guilib.h"
 #include "ime.h"
 
+#include "psp2/net/net.h"
 #include "ui_settings.h"
 
 #include "../connection.h"
@@ -37,6 +39,8 @@
 SERVER_DATA server;
 PAPP_LIST server_applist;
 int pos[2];
+
+
 
 int get_app_id(PAPP_LIST list, char *name) {
   while (list != NULL) {
@@ -95,10 +99,11 @@ void ui_connect_stream(int appId) {
   if (ret == 0) {
     server.currentGame = appId;
   } else {
-    const char* stage = LiGetStageName(ret);
+    
+    const char* connection_failed_stage_name = LiGetStageName(connection_stage);
 
-    display_error("Failed to start stream: error code %d\nFailed stage: %s\n(error code %d)",
-                  ret, stage, connection_failed_stage_name);
+    display_error("Failed to start stream:\nFailed stage: %s\n(error code %d)",
+                  connection_failed_stage_name, ret);
     return;
   }
 }
@@ -160,7 +165,7 @@ int ui_connect_loop(int id, void *context, const input_data *input) {
         }
         return QUIT_RELOAD;
       }
-      display_error("Pairing failed: %d", ret);
+      display_error("Pairing failed: %d\n Error: %s", ret, gs_error);
       return 0;
 
     case CONNECT_DISCONNECT:

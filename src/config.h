@@ -71,6 +71,7 @@ typedef struct _CONFIGURATION {
   bool enable_ref_frame_invalidation;
   bool enable_vita_vblank_wait;
   bool enable_motion_controls; //Metalface
+  bool enable_double_tap_sprint; //Metalface
   FILE *log_file;
   // runtime configuration, value will be recreated at launch
   SceCtrlButtons btn_confirm;
