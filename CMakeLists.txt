@@ -11,8 +11,8 @@ project(moonlight)
 set(TITLE_ID "XYZZ00002")
 set(TITLE "Moonlight")
 set(VERSION_MAJOR "0")
-set(VERSION_MINOR "9")
-set(VERSION_PATCH "3")
+set(VERSION_MINOR "10")
+set(VERSION_PATCH "0")
 
 execute_process(COMMAND
 	python -c "print('%02d.%02d' % (${VERSION_MAJOR}, ${VERSION_MINOR}))"
@@ -24,7 +24,7 @@ add_definitions(-DVERSION_MAJOR=${VERSION_MAJOR})
 add_definitions(-DVERSION_MINOR=${VERSION_MINOR})
 add_definitions(-DVERSION_PATCH=${VERSION_PATCH})
 
-set(CMAKE_C_FLAGS "-Wl,-q -g3 -std=c99 -D__vita__ -DENET_DEBUG")
+set(CMAKE_C_FLAGS "-Wl,-q -Ofast -std=c99 -D__vita__")
 
 
 

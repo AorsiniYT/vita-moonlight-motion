@@ -3,6 +3,34 @@
 This is a vita port of Moonlight Embedded.
 Moonlight is an open source implementation of NVIDIA GameStream.
 
+## Modified
+
+[xyzz]: https://github.com/xyzz/vita-moonlight
+
+[Originally by xyzz][xyzz], this fork of vita-moonlight contains changes by youbobcat to add motion controls.
+I've added another option to allow for a double tap to sprint (Press L3).
+It also contains bugfixes and aims to be compatible with Linux hosts running Sunshine.
+
+This is also untested and I'm new to developing, so use with caution!
+
+If somehow these features are wanted in the original project, please reach out and I'll be happy to submit pull requests/modify whatever.
+
+## Planned Features (In order of feasibility)
+
+- Adjustable double tap to sprint delay
+- Fix for quitting apps
+- Fix for pairing to host
+- Per app configuration
+- In app button remapping
+
+## Changes
+
+- Update moonlight-common-c and enet
+- moonlight-common-c now uses pthreads for threading (fix re-entry crash)
+- enet has additional definitions for networking
+- Disabled video slicing (for now)
+- Increase video decoder buffer size (fix for crashing with VA-API)
+
 ## Documentation
 
 More information can find [moonlight-docs][1], [moonlight-embedded][2], and our [wiki][3].
