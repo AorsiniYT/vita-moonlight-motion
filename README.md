@@ -18,6 +18,7 @@ If somehow these features are wanted in the original project, please reach out a
 ## Planned Features (In order of feasibility)
 
 - Adjustable double tap to sprint delay
+- Manual option to choose remote or local connection
 - Fix for quitting apps
 - Fix for pairing to host
 - Per app configuration
@@ -30,6 +31,12 @@ If somehow these features are wanted in the original project, please reach out a
 - enet has additional definitions for networking
 - Disabled video slicing (for now)
 - Increase video decoder buffer size (fix for crashing with VA-API)
+
+## Known Issues
+
+- Pairing does not work correctly (You can pair manually by editing moonlight.conf)
+- Quitting an app directly after streaming does not work
+- Losing connection, then trying to reconnect is buggy
 
 ## Documentation
 
