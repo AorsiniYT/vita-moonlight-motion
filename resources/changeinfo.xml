@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <changeinfo>
 <changes app_ver="00.09"><![CDATA[
+## 0.10.0<br>
+* Add double tap to sprint option<br>
+* Add motion controls<br>
+* Fork moonlight-common-c and enet<br>
+]]></changes>
+<changes app_ver="00.09"><![CDATA[
 ## 0.9.3<br>
 * Fix pairing issue (#231, 5494d93)<br>
 * Update latest moonlight-common-c & enet (902cbed)<br>
