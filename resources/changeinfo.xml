@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <changeinfo>
 <changes app_ver="00.10"><![CDATA[
+## 0.10.1<br>
+* Fix pairing issue (Same one from v0.9.3)
 ## 0.10.0<br>
 * Add double tap to sprint option<br>
 * Add motion controls<br>
