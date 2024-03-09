@@ -34,9 +34,10 @@ If somehow these features are wanted in the original project, please reach out a
 
 ## Known Issues
 
-- Pairing does not work correctly (You can pair manually by editing moonlight.conf)
 - Quitting an app directly after streaming does not work
 - Losing connection, then trying to reconnect is buggy
+- Pairing from "Resume from <>" dialog does not save paired info
+- Pairing from search devices and manual works, but doesn't update the menu requiring a restart
 
 ## Documentation
 
