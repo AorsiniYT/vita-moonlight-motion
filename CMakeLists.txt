@@ -123,8 +123,6 @@ add_executable(${PROJECT_NAME}.elf
 )
 
 target_link_libraries(${PROJECT_NAME}.elf
-	-lpthread
-	-lcrypto
 	-lexpat
 	-lcurl
 	-lz

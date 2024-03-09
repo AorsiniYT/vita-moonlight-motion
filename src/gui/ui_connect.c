@@ -4,8 +4,6 @@
 #include "errors.h"
 #include "guilib.h"
 #include "ime.h"
-
-#include "psp2/net/net.h"
 #include "ui_settings.h"
 
 #include "../connection.h"
@@ -16,20 +14,17 @@
 #include "../device.h"
 
 #include "client.h"
-#include "discover.h"
 #include "../platform.h"
 
 #include "../power/vita.h"
 #include "../input/vita.h"
 
-#include <assert.h>
-#include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <ctype.h>
 
 #include <psp2/kernel/threadmgr.h>
 #include <psp2/ctrl.h>
@@ -39,8 +34,6 @@
 SERVER_DATA server;
 PAPP_LIST server_applist;
 int pos[2];
-
-
 
 int get_app_id(PAPP_LIST list, char *name) {
   while (list != NULL) {
@@ -391,11 +384,15 @@ device_info_t* ui_connect_and_pairing(device_info_t *info) {
 
   device_info_t *p = append_device(info);
   if (p == NULL) {
-    display_error("Can't add device list\n%s", info->name);
-    return NULL;
+    ret = update_device(info);
+    if (ret == false) {
+      display_error("Could not update device info");
+    }
+
+  } else {
+    info = p;
   }
 
-  info = p;
   // connectable address
   save_device_info(info);
 

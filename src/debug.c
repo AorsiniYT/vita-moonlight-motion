@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <psp2/rtc.h>
+#include <stdlib.h>
 
 #include "debug.h"
 
@@ -30,7 +31,10 @@ void vita_debug_log(const char *s, ...) {
     return;
   }
 
-  char buffer[1024] = {0};
+  char* buffer = malloc(8192);
+  if (!buffer) {
+    return;
+  }
 
   SceDateTime time;
   sceRtcGetCurrentClock(&time, 0);
@@ -42,13 +46,15 @@ void vita_debug_log(const char *s, ...) {
 
   va_list va;
   va_start(va, s);
-  int len = vsnprintf(&buffer[25], 998, s, va);
+  int len = vsnprintf(&buffer[25], 8000, s, va);
   va_end(va);
 
-  fprintf(config.log_file, buffer);
+  fprintf(config.log_file, "%s", buffer);
   if (buffer[len + 24] != '\n') {
       fprintf(config.log_file, "\n");
   }
   fflush(config.log_file);
+
+  free(buffer);
 }
 
