@@ -22,6 +22,7 @@
 #include "../debug.h"
 #include "../gui/guilib.h"
 #include "../util.h"
+#include "../input/vita.h"
 #include "openssl/buffer.h"
 #include "sys/_stdint.h"
 #include "vita.h"
@@ -46,6 +47,8 @@
 #endif
 
 extern void gs_sps_stop();
+
+extern double_click_tracker dc_tracker;
 
 void draw_streaming(vita2d_texture *frame_texture);
 void draw_fps();
@@ -559,6 +562,11 @@ void draw_indicators() {
       poor_net_indicator.alpha += (0x4 * (poor_net_indicator.plus ? 1 : -1));
     }
   }
+
+  if (dc_tracker.currently_sprinting) {
+    vita2d_font_draw_text(font, 40, 20, RGBA8(0xFF, 0xFF, 0xFF, 0xFF), 16, "Sprint");
+  }
+
 }
 
 void vitavideo_start() {

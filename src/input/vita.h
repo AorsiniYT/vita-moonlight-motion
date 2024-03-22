@@ -59,6 +59,16 @@ typedef enum {
   RIGHT_TRIGGER
 } PadSection;
 
+typedef struct double_click_tracker {
+  bool y_max_once;
+  uint64_t y_max_once_time;
+  bool returned_to_center;
+  uint64_t returned_to_center_time;
+  bool currently_sprinting;
+  uint64_t sprinting_returned_center_time;
+  bool sprinting_returned_center;
+} double_click_tracker;
+
 #define INPUT_TYPE_MASK         0xfff00000
 #define INPUT_VALUE_MASK        0x000fffff
 

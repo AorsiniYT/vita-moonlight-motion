@@ -44,26 +44,19 @@
 #define HEIGHT 544
 #define MOUSE_SENSITIVITY 2400.0
 
-const  short Y_MAXIMIUM_DEADZONE = -32383;
-const  short Y_MINIMUM_DEADZONE = -512;
+const short Y_MAXIMIUM_DEADZONE = -32383;
+const short Y_MINIMUM_DEADZONE = -1024;
 
-const uint32_t DOUBLECLICK_STEP_TIME = 400000;
-
-//could put this in header?
-typedef struct double_click_tracker {
-  bool y_max_once;
-  uint64_t y_max_once_time;
-  bool returned_to_center;
-  uint64_t returned_to_center_time;
-  bool currently_sprinting;
-} double_click_tracker;
+const uint32_t DOUBLECLICK_STEP_TIME = 300000;
 
 double_click_tracker dc_tracker = {
   .y_max_once = false,
   .y_max_once_time = 0,
   .returned_to_center = false,
   .returned_to_center_time = 0,
-  .currently_sprinting = false
+  .currently_sprinting = false,
+  .sprinting_returned_center_time = 0,
+  .sprinting_returned_center = false
 };
 
 struct mapping map = {0};
@@ -432,12 +425,29 @@ inline void check_for_double_click(input_data *curr) {
     }
   }
 
-  //Y is now minimum and we're done sprinting
+  //Y is now minimum and we're done sprinting (almost)
   if (dc_tracker.currently_sprinting && curr->ly > Y_MINIMUM_DEADZONE) {
+
+    //if we haven't returned to the center yet, mark that we have
+    if (!dc_tracker.sprinting_returned_center) {
+      dc_tracker.sprinting_returned_center_time = sceKernelGetSystemTimeWide();
+      dc_tracker.sprinting_returned_center = true;
+    } else {
+      //we've already returned to the center, see how long we've been here
+      if ((sceKernelGetSystemTimeWide() - dc_tracker.sprinting_returned_center_time) > 50000) {
+        dc_tracker.currently_sprinting = false;
+        dc_tracker.sprinting_returned_center = false;
+
+      }
+    }
+    //Mark that we've returned to center
     #ifdef DOUBLETAP_DEBUG
     vita_debug_log("We stopped sprinting");
     #endif
     dc_tracker.currently_sprinting = false;
+
+  } else {
+    dc_tracker.sprinting_returned_center = false;
   }
 
   if (dc_tracker.currently_sprinting) {
