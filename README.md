@@ -1,3 +1,9 @@
+# Motion Branch
+
+This branch is for fully emulating motion controls for the vita, but
+sunshine doesn't support anything but x360 controller emulation on linux. There is an open PR, once merged I will continue work on this.
+
+
 # Vita Moonlight
 
 This is a vita port of Moonlight Embedded.

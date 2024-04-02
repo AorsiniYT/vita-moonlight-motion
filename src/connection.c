@@ -189,6 +189,17 @@ void connection_status_update(int status) {
   }
 }
 
+void connection_set_motion_state(uint16_t controller, uint8_t motion_type, uint16_t report_rate) {
+  vita_debug_log("Set motion state called, controller: %u, Type: %u, Report rate: %u", controller, motion_type, report_rate);
+  if (report_rate == 0) {
+    motion_state.enabled = false;
+  } else {
+    motion_state.motion_type = motion_type;
+    motion_state.report_rate = report_rate;
+    motion_state.enabled = true;
+  }
+}
+
 CONNECTION_LISTENER_CALLBACKS connection_callbacks = {
   .stageStarting = connection_stage_starting,
   .stageComplete = connection_stage_complate,
@@ -197,4 +208,5 @@ CONNECTION_LISTENER_CALLBACKS connection_callbacks = {
   .connectionTerminated = connection_connection_terminated,
   .connectionStatusUpdate = connection_status_update,
   .logMessage = vita_debug_log,
+  .setMotionEventState = connection_set_motion_state
 };

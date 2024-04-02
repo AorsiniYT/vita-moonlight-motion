@@ -29,6 +29,8 @@
 #include <psp2/touch.h>
 #include <psp2/rtc.h>
 
+#include "Limelight.h"
+
 
 
 typedef enum {
@@ -58,6 +60,18 @@ typedef enum {
   LEFT_TRIGGER,
   RIGHT_TRIGGER
 } PadSection;
+
+typedef struct motion_data {
+    bool enabled;
+    uint8_t motion_type;
+    uint16_t report_rate;
+} motion_data;
+
+static motion_data motion_state = {
+    .enabled = false,
+    .motion_type = LI_MOTION_TYPE_GYRO,
+    .report_rate = 0,
+};
 
 typedef struct double_click_tracker {
   bool y_max_once;
