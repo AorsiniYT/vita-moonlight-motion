@@ -116,9 +116,12 @@ inline void move_mouse(TouchData old, TouchData cur) {
 }
 
 inline void move_motion(SceMotionState motionState) {
+  const float motion_scalar_x = 1.2;
+  const float motion_scalar_y = 0.8;
+
   // Get the mouse position.
-  double delta_x = (deviceQuat_old.y-motionState.deviceQuat.y) * (float)MOUSE_SENSITIVITY;
-  double delta_y = (deviceQuat_old.x-motionState.deviceQuat.x) * (float)MOUSE_SENSITIVITY;
+  double delta_x = (deviceQuat_old.y-motionState.deviceQuat.y) * (float)MOUSE_SENSITIVITY * motion_scalar_x;
+  double delta_y = (deviceQuat_old.x-motionState.deviceQuat.x) * (float)MOUSE_SENSITIVITY * motion_scalar_y;
 
   if (delta_x == 0 && delta_y == 0) {
     return;
