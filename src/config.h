@@ -20,7 +20,6 @@
 #include <Limelight.h>
 
 #include <stdio.h>
-#include <stdint.h>
 #include <stdbool.h>
 
 #include <psp2/ctrl.h>
@@ -71,7 +70,10 @@ typedef struct _CONFIGURATION {
   bool enable_ref_frame_invalidation;
   bool enable_vita_vblank_wait;
   bool enable_motion_controls; //Metalface
-  bool enable_double_tap_sprint; //Metalface
+  bool enable_double_tap_sprint; //**
+  uint32_t double_tap_sprint_step_time; //** -IN MILLISECONDS
+  float motion_controls_scalar_x;//**
+  float motion_controls_scalar_y;// **/
   FILE *log_file;
   // runtime configuration, value will be recreated at launch
   SceCtrlButtons btn_confirm;

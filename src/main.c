@@ -18,13 +18,11 @@
  */
 
 #include "loop.h"
-#include "client.h"
 #include "connection.h"
 #include "configuration.h"
 #include "audio.h"
 #include "psp2/net/netctl.h"
 #include "video.h"
-#include "discover.h"
 #include "config.h"
 #include "platform.h"
 
@@ -40,7 +38,6 @@
 #include <sys/types.h>
 #include <openssl/rand.h>
 #include <openssl/evp.h>
-#include <ctype.h>
 #include "curl/curl.h"
 
 #include <psp2/kernel/rng.h>

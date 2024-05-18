@@ -563,9 +563,10 @@ void draw_indicators() {
     }
   }
 
-  if (dc_tracker.currently_sprinting) {
+  // TODO: Add icon to this
+  /* if (dc_tracker.currently_sprinting) {
     vita2d_font_draw_text(font, 40, 20, RGBA8(0xFF, 0xFF, 0xFF, 0xFF), 16, "Sprint");
-  }
+  } */
 
 }
 

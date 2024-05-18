@@ -26,7 +26,6 @@
 #include <string.h>
 #include <getopt.h>
 #include <ini.h>
-#include "graphics.h"
 #include "input/vita.h"
 
 extern char* strdup(const char*);
@@ -42,6 +41,7 @@ extern char* strdup(const char*);
 #define write_config_int(fd, key, value) fprintf(fd, "%s = %d\n", key, value)
 #define write_config_hex(fd, key, value) fprintf(fd, "%s = %X\n", key, value)
 #define write_config_bool(fd, key, value) fprintf(fd, "%s = %s\n", key, value?"true":"false");
+#define write_config_float(fd, key, value) fprintf(fd, "%s = %f\n", key, value)
 #define write_config_section(fd, key) fprintf(fd, "\n[%s]\n", key)
 
 CONFIGURATION config;
@@ -57,6 +57,7 @@ static int ini_handle(void *out, const char *section, const char *name,
 #define INT(v) atoi((v))
 #define BOOL(v) strcmp((v), "true") == 0
 #define STR(v) strdup((v))
+#define FLT(v) atof((v))
 
   PCONFIGURATION config = (PCONFIGURATION)out;
   if (strcmp(section, "backtouchscreen_deadzone") == 0) {
@@ -124,6 +125,12 @@ static int ini_handle(void *out, const char *section, const char *name,
       config->enable_motion_controls = BOOL(value);
     } else if (strcmp(name, "enable_double_tap_sprint") == 0) {
       config->enable_double_tap_sprint = BOOL(value);
+    } else if (strcmp(name, "double_tap_sprint_step_time") == 0) {
+      config->double_tap_sprint_step_time = INT(value);
+    } else if (strcmp(name, "motion_controls_scalar_x") == 0) {
+      config->motion_controls_scalar_x = FLT(value);
+    } else if (strcmp(name, "motion_controls_scalar_y") == 0) {
+      config->motion_controls_scalar_y = FLT(value);
     }
   }
   return 0;
@@ -177,6 +184,9 @@ void config_save(const char* filename, PCONFIGURATION config) {
   write_config_bool(fd, "enable_vita_vblank_wait", config->enable_vita_vblank_wait);
   write_config_bool(fd, "enable_motion_controls", config->enable_motion_controls);
   write_config_bool(fd, "enable_double_tap_sprint", config->enable_double_tap_sprint);
+  write_config_int(fd, "double_tap_sprint_step_time", config->double_tap_sprint_step_time);
+  write_config_float(fd, "motion_controls_scalar_x", config->motion_controls_scalar_x);
+  write_config_float(fd, "motion_controls_scalar_y", config->motion_controls_scalar_y);
   //write_config_bool(fd, "enable_hdr", config->stream.enableHdr);
 
   write_config_section(fd, "backtouchscreen_deadzone");
@@ -245,6 +255,11 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->enable_ref_frame_invalidation = false;
   config->enable_vita_vblank_wait = false;
   config->enable_double_tap_sprint = false;
+
+  config->double_tap_sprint_step_time = 200;
+
+  config->motion_controls_scalar_x = 1.2;
+  config->motion_controls_scalar_y = 0.8;
 
   config->inputsCount = 0;
   config->mapping = NULL;
