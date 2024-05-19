@@ -23,7 +23,6 @@
 #include "../gui/guilib.h"
 #include "../util.h"
 #include "../input/vita.h"
-#include "openssl/buffer.h"
 #include "sys/_stdint.h"
 #include "vita.h"
 #include "sps.h"
@@ -39,8 +38,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <stdarg.h>
 
 #if 1
 #define printf vita_debug_log
@@ -563,10 +560,9 @@ void draw_indicators() {
     }
   }
 
-  // TODO: Add icon to this
-  /* if (dc_tracker.currently_sprinting) {
-    vita2d_font_draw_text(font, 40, 20, RGBA8(0xFF, 0xFF, 0xFF, 0xFF), 16, "Sprint");
-  } */
+  if (dc_tracker.currently_sprinting) {
+    vita2d_font_draw_text(font, 800, 500, RGBA8(0xFF, 0xFF, 0xFF, 0xFF), 32, ICON_SPRINT);
+  }
 
 }
 

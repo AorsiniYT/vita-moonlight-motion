@@ -9,7 +9,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <ctype.h>
 
 #include <psp2/net/net.h>
 #include <psp2/sysmodule.h>
@@ -212,7 +211,7 @@ void draw_menu(menu_entry menu[], int total_elements, menu_geom geom, int cursor
       right_x_offset += text_width + 10;
     }
 
-    if (menu[i].subname) {
+    if (*menu[i].subname) {
       int text_width = vita2d_font_text_width(font, 18, menu[i].subname);
       vita2d_font_draw_text(
           font,
