@@ -115,32 +115,6 @@ inline void move_mouse(TouchData old, TouchData cur) {
   LiSendMouseMoveEvent(x, y);
 }
 
-inline void move_motion(SceMotionState motionState) {
-  // Get the mouse position.
-  double delta_x = (deviceQuat_old.y-motionState.deviceQuat.y) * (float)MOUSE_SENSITIVITY;
-  double delta_y = (deviceQuat_old.x-motionState.deviceQuat.x) * (float)MOUSE_SENSITIVITY;
-
-  if (delta_x == 0 && delta_y == 0) {
-    return;
-  }
-  //TODO: Thread
-
-  //int x = lround(delta_x * mouse_multiplier);
-  //int y = lround(delta_y * mouse_multiplier);
-
-  //LiSendMouseMoveEvent(x, y);
-
-  //Controller number could start at 0, I hope not
-  //Angular velocity should be in deg/s
-  // -X ... +X : left ... right
-  // -Y ... +Y : bottom ... top
-  // -Z ... +Z : farther ... closer
-  float vx = motionState.angularVelocity.x;
-  float vy = motionState.angularVelocity.y;
-  float vz = motionState.angularVelocity.z;
-  vita_debug_log("vx: %f\nvy: %f\nvz: %f\n", vx, vy, vz);
-  LiSendControllerMotionEvent(1, LI_MOTION_TYPE_GYRO, vx, vy, vz);
-}
 
 inline void move_wheel(TouchData old, TouchData cur) {
   int old_y = (old.points[0].y + old.points[1].y) / 2;
@@ -475,10 +449,6 @@ inline void vitainput_process(void) {
   sceCtrlSetSamplingModeExt(SCE_CTRL_MODE_ANALOG_WIDE);
   sceCtrlPeekBufferPositiveExt2(controller_port, &pad, 1);
 
-  if (config.enable_motion_controls) {
-    sceMotionGetState(&motionState);
-  }
-
   sceTouchPeek(SCE_TOUCH_PORT_FRONT, &front, 1);
   sceTouchPeek(SCE_TOUCH_PORT_BACK, &back, 1);
   read_frontscreen();
@@ -524,28 +494,7 @@ inline void vitainput_process(void) {
           is_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SE),
           is_old_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SE));
 
-  if (config.enable_motion_controls) {
-    //Resetting motion causes downwards jerk temporary code to prevent
-    if(sceRtcCompareTick(&current, &until) > 0 && !_calibrateGyro){
-      //move_motion(motionState);
-    }
-
-
-    //TODO: Don't calibrate based on a button press
-    if((is_pressed(map.btn_tl))){
-      if(_calibrateGyro){
-        sceMotionReset();
-        sceRtcTickAddMicroseconds(&until, &current, MOTION_ACTION_DELAY);
-        _motionResetCount = 1;
-      }
-      _calibrateGyro = false;
-    }else{
-      _calibrateGyro = true;
-      _motionCalibrated = false;
-      _motionResetCount = 0;
-    }
-    memcpy(&deviceQuat_old, &motionState.deviceQuat, sizeof(struct SceFQuaternion));
-  }
+  
 
   if (config.enable_double_tap_sprint) {
     check_for_double_click(&curr);
@@ -634,7 +583,6 @@ bool vitainput_init() {
   sceCtrlSetSamplingModeExt(SCE_CTRL_MODE_ANALOG_WIDE);
   sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, SCE_TOUCH_SAMPLING_STATE_START);
   sceTouchSetSamplingState(SCE_TOUCH_PORT_BACK, SCE_TOUCH_SAMPLING_STATE_START);
-  sceMotionStartSampling();
 
   SceUID thid = sceKernelCreateThread("vitainput_thread", vitainput_thread, 0, 0x40000, 0, 0, NULL);
   if (thid >= 0) {
@@ -737,7 +685,7 @@ void vitainput_config(CONFIGURATION config) {
 
 void vitainput_start(void) {
   uint16_t gamepadMask = 1;
-  uint32_t gamepadCapabilites = LI_CCAP_GYRO | LI_CCAP_BATTERY_STATE | LI_CCAP_ACCEL | LI_CCAP_ANALOG_TRIGGERS | LI_CCAP_RGB_LED | LI_CCAP_RUMBLE | LI_CCAP_TOUCHPAD;
+  uint32_t gamepadCapabilites = LI_CCAP_GYRO | LI_CCAP_BATTERY_STATE | LI_CCAP_ACCEL | LI_CCAP_TOUCHPAD;
 
   uint32_t gamepadSupportedButtonFlags = 0xffff;
   gamepadSupportedButtonFlags |= TOUCHPAD_FLAG;

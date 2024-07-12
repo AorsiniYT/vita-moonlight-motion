@@ -61,6 +61,7 @@
 #include "gui/ui.h"
 #include "util.h"
 #include "power/vita.h"
+#include "input/motion.h"
 
 #define VITA_NET_MEM_SIZE 1 * 1024 * 1024
 
@@ -131,6 +132,11 @@ int main(int argc, char* argv[]) {
   }
 
   if (!vitainput_init()) {
+    printf("Failed to init input!");
+    loop_forever();
+  }
+
+  if (!vita_motion_init()) {
     printf("Failed to init input!");
     loop_forever();
   }
