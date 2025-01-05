@@ -683,6 +683,8 @@ void vitainput_config(CONFIGURATION config) {
   mouse_multiplier = 1 + (0.01 * config.mouse_acceleration);
 }
 
+extern bool active_motion_threads;
+
 void vitainput_start(void) {
   uint16_t gamepadMask = 1;
   uint32_t gamepadCapabilites = LI_CCAP_GYRO | LI_CCAP_BATTERY_STATE | LI_CCAP_ACCEL | LI_CCAP_TOUCHPAD;
@@ -696,8 +698,10 @@ void vitainput_start(void) {
   LiSendControllerBatteryEvent(0, LI_BATTERY_STATE_FULL, 100);
 
   active_input_thread = true;
+  active_motion_threads = true;
 }
 
 void vitainput_stop(void) {
   active_input_thread = false;
+  active_motion_threads = false;
 }

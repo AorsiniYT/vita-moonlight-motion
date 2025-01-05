@@ -8,6 +8,10 @@
 #include "vita.h"
 
 
+// TODO: Config Value
+static uint32_t MOTION_SCALE = 25;
+
+
 /*
 if (config.enable_motion_controls) {
     if (motion_enabled_from_host) {
@@ -66,6 +70,8 @@ if (config.enable_motion_controls) {
 
 */
 
+bool active_motion_threads = false;
+
 motion_data_state motion_state = {
     .motion_type_gyro_enabled = 0,
     .motion_type_accel_enabled = 0,
@@ -76,7 +82,8 @@ motion_data_state motion_state = {
 bool vita_motion_init() {
 
     sceMotionStartSampling();
-    sceMotionSetDeadband(false);
+    sceMotionSetDeadband(true);
+    sceMotionReset();
 
     SceUID thid = sceKernelCreateThread("vitainput_motion_gyro_thread", vitainput_motion_gyro_thread, 0, 0x40000, 0, 0, NULL);
     if (thid >= 0) {
@@ -96,24 +103,27 @@ bool vita_motion_init() {
 
 int vitainput_motion_gyro_thread(SceSize args, void *argp) {
   while (1) {
-    if (motion_state.motion_type_gyro_enabled == true) {
+    if (motion_state.motion_type_gyro_enabled == true && active_motion_threads == true) {
       motion_process_gyro();
+    } else {
+      sceKernelDelayThread(1000000);
     }
     //1000/report rate = delay * 1000 (us)
     sceKernelDelayThread((1000/motion_state.report_rate_gyro) * 1000);
   }
-
-
+  
   return 0;
 }
 
 int vitainput_motion_accel_thread(SceSize args, void *argp) {
   while (1) {
-    if (motion_state.motion_type_accel_enabled == true) {
+    if (motion_state.motion_type_accel_enabled == true && active_motion_threads == true) {
       motion_process_accel();
+    } else {
+      sceKernelDelayThread(1000000);
     }
 
-    sceKernelDelayThread((1000/motion_state.report_rate_accel) * 1000); // 2 ms
+    sceKernelDelayThread((1000/motion_state.report_rate_accel) * 1000);
   }
 
   return 0;
@@ -127,7 +137,12 @@ void motion_process_gyro() {
 
   float vx = motionState.angularVelocity.x;
   float vy = motionState.angularVelocity.z * -1;
-  float vz = motionState.angularVelocity.y;
+  float vz = motionState.angularVelocity.y * -1;
+
+  vx = vx * MOTION_SCALE;
+  vy = vy * MOTION_SCALE;
+  vz = vz * MOTION_SCALE;
+
   vita_debug_log("Gyro: vx: %f vy: %f vz: %f", vx, vy, vz);
   LiSendControllerMotionEvent(0, LI_MOTION_TYPE_GYRO, vx, vy, vz);
 }
@@ -138,7 +153,12 @@ void motion_process_accel() {
 
   float vx = motionState.acceleration.x;
   float vy = motionState.acceleration.z * -1;
-  float vz = motionState.acceleration.y;
+  float vz = motionState.acceleration.y * -1;
+
+  vx = vx * MOTION_SCALE;
+  vy = vy * MOTION_SCALE;
+  vz = vz * MOTION_SCALE;
+
   //vita_debug_log("Accel: vx: %f\nvy: %f\nvz: %f\n", vx, vy, vz);
   LiSendControllerMotionEvent(0, LI_MOTION_TYPE_ACCEL, vx, vy, vz);
 

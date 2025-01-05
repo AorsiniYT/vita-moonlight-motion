@@ -88,7 +88,7 @@ static void connection_connection_terminated(int error_code) {
       break;
     default:
       vita_debug_log("Connection terminated with error: %d\n", error_code);
-      break;
+      break;    
   }
 
   LiStopConnection();
@@ -193,6 +193,10 @@ void connection_set_motion_state(uint16_t controller, uint8_t motion_type, uint1
   vita_debug_log("Set motion state called, controller: %u, Type: %u, Report rate: %u", controller, motion_type, report_rate);
 
   //TODO: Multicontroller support here someday? Can't afford pstv tho
+  if (config.enable_motion_controls == false) {
+    vita_debug_log("Ignored gyro request due to config");
+    return;
+  }
 
   if (report_rate == 0) {
     switch (motion_type) {
