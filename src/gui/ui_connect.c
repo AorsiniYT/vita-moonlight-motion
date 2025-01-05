@@ -453,10 +453,15 @@ bool check_connection(const char *name, char *addr, uint16_t port) {
 
   flash_message("Check connecting to:\n %s:%d...", addr, port);
 
+  int log_level = 0;
+  if (config.save_debug_log) {
+    log_level = 2;
+  }
+
   char key_dir[4096];
   sprintf(key_dir, "%s/%s", config.key_dir, name);
 
-  if (gs_init(&server, addr, port, key_dir, 0, true) != GS_OK) {
+  if (gs_init(&server, addr, port, key_dir, log_level, true) != GS_OK) {
     return false;
   }
   connection_terminate();

@@ -42,9 +42,7 @@
 
 #include <stdarg.h>
 
-#if 1
 #define printf vita_debug_log
-#endif
 
 extern void gs_sps_stop();
 
