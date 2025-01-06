@@ -12,6 +12,7 @@
 #include "../config.h"
 #include "../util.h"
 #include "../device.h"
+#include "../debug.h"
 
 #include "client.h"
 #include "../platform.h"
@@ -60,6 +61,7 @@ int get_app_name(PAPP_LIST list, int id, char *name) {
 
 void ui_connect_stream(int appId) {
   // TODO support force controller id
+  vita_debug_log("Running gs_start_app...");
   int ret = gs_start_app(&server, &config.stream, appId, config.sops, config.localaudio, 1);
   if (ret < 0) {
     if (ret == GS_NOT_SUPPORTED_4K)
@@ -71,6 +73,7 @@ void ui_connect_stream(int appId) {
 
     return;
   }
+  vita_debug_log("App started.");
 
   enum platform system = VITA;
   int drFlags = 0;
@@ -85,9 +88,11 @@ void ui_connect_stream(int appId) {
     video_callback->capabilities &= ~CAPABILITY_REFERENCE_FRAME_INVALIDATION_AVC;
   }
 
+  vita_debug_log("Running LiStartConnection...");
   ret = LiStartConnection(&server.serverInfo, &config.stream, &connection_callbacks,
                           video_callback, platform_get_audio(system),
                           NULL, drFlags, NULL, 0);
+  vita_debug_log("Connection started.");
 
   if (ret == 0) {
     server.currentGame = appId;
@@ -455,7 +460,7 @@ bool check_connection(const char *name, char *addr, uint16_t port) {
 
   int log_level = 0;
   if (config.save_debug_log) {
-    log_level = 2;
+    log_level = 3;
   }
 
   char key_dir[4096];
@@ -464,6 +469,9 @@ bool check_connection(const char *name, char *addr, uint16_t port) {
   if (gs_init(&server, addr, port, key_dir, log_level, true) != GS_OK) {
     return false;
   }
+
+  vita_debug_log("Connection check succeded.");
+
   connection_terminate();
   return true;
 }

@@ -326,6 +326,8 @@ static int vita_setup(int videoFormat, int width, int height, int redrawRate, vo
       goto cleanup;
     }
 
+    printf("Initalized Framebuffer");
+
     video_status++;
   }
 
@@ -351,6 +353,7 @@ static int vita_setup(int videoFormat, int width, int height, int redrawRate, vo
       ret = VITA_VIDEO_ERROR_INIT_LIB;
       goto cleanup;
     }
+    printf("Initalized AVC library");
     video_status++;
   }
 

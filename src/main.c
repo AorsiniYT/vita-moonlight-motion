@@ -18,13 +18,11 @@
  */
 
 #include "loop.h"
-#include "client.h"
 #include "connection.h"
 #include "configuration.h"
 #include "audio.h"
 #include "psp2/net/netctl.h"
 #include "video.h"
-#include "discover.h"
 #include "config.h"
 #include "platform.h"
 
@@ -40,7 +38,6 @@
 #include <sys/types.h>
 #include <openssl/rand.h>
 #include <openssl/evp.h>
-#include <ctype.h>
 #include "curl/curl.h"
 
 #include <psp2/kernel/rng.h>
@@ -63,7 +60,10 @@
 #include "power/vita.h"
 #include "input/motion.h"
 
+#include "debug.h"
+
 #define VITA_NET_MEM_SIZE 1 * 1024 * 1024
+
 
 SceNetInitParam net_param = {
   .memory = NULL,
@@ -113,11 +113,19 @@ static void vita_init() {
   ret = sceNetCtlInit();
   if (ret < 0) {
     printf("Net Ctl init failed!");
+    loop_forever();
   }
 
   ret = curl_global_init(CURL_GLOBAL_ALL);
   if (ret < 0) {
     printf("CURL init failed!");
+    loop_forever();
+  }
+
+  ret = vita_debug_init();
+  if (ret != true) {
+    printf("Debug log mutex init failed!");
+    loop_forever();
   }
 }
 

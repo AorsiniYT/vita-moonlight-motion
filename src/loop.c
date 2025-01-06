@@ -46,9 +46,7 @@ static int sigFd; */
     case SIGTERM:
     case SIGQUIT:
     case SIGHUP:
-      return LOOP_RETURN;
-  }
-  return LOOP_OK;
+      return LOOP_RETURN;vita_setup
   #endif
 } */
 
@@ -82,7 +80,7 @@ static int sigFd; */
   int fdindex;
 
   for (int i=0;i<=numFds;i++) {
-    if (fds[i].fd == fd) {
+    if (fds[i].fd == fd) {vita_setup
       fdindex = i;
       break;
     }
@@ -105,9 +103,7 @@ static int sigFd; */
   sigaddset(&sigset, SIGINT);
   sigaddset(&sigset, SIGQUIT);
   sigprocmask(SIG_BLOCK, &sigset, NULL);
-  sigFd = signalfd(-1, &sigset, 0);
-  loop_add_fd(sigFd, loop_sig_handler, POLLIN | POLLERR | POLLHUP);
-
+  sigFd = signalfd(-1, &sigset, 0);vita_setup
 //static bool evdev_poll(bool (*handler) (struct input_event*, struct input_device*)) {
   while (poll(fds, numFds, -1)) {
     for (int i=0;i<numFds;i++) {

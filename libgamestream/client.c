@@ -40,8 +40,14 @@
 #include <openssl/pem.h>
 #include <openssl/err.h>
 
+#include "../src/debug.h"
+
 #define UNIQUE_FILE_NAME "uniqueid.dat"
 #define P12_FILE_NAME "client.p12"
+
+//
+#define printf vita_debug_log
+//
 
 #define UNIQUEID_BYTES 8
 #define UNIQUEID_CHARS (UNIQUEID_BYTES*2)
