@@ -26,7 +26,6 @@
 #include "debug.h"
 #include "config.h"
 #include "psp2/kernel/threadmgr/thread.h"
-#include "psp2common/kernel/threadmgr.h"
 
 pthread_mutex_t print_mutex;
 
@@ -52,14 +51,14 @@ void vita_debug_log(const char *s, ...) {
   SceDateTime time;
   sceRtcGetCurrentClock(&time, 0);
 
-  snprintf(buffer, 64, "%04d%02d%02d %02d:%02d:%02d.%06d :: %12d ",
+  snprintf(buffer, 26, "%04d%02d%02d %02d:%02d:%02d.%06d ",
            time.year, time.month, time.day,
            time.hour, time.minute, time.second,
-           time.microsecond, sceKernelGetThreadId());
+           time.microsecond);
 
   va_list va;
   va_start(va, s);
-  int len = vsnprintf(&buffer[40], 8000, s, va);
+  int len = vsnprintf(&buffer[25], 8000, s, va);
   va_end(va);
 
   fprintf(config.log_file, "%s", buffer);

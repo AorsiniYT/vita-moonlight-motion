@@ -53,7 +53,6 @@ add_executable(${PROJECT_NAME}.elf
 	src/connection.c
 	src/global.c
 	src/debug.c
-	src/loop.c
 	src/main.c
 	src/platform.c
 	src/util.c

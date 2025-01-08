@@ -17,7 +17,6 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "loop.h"
 #include "connection.h"
 #include "configuration.h"
 #include "audio.h"
