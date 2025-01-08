@@ -63,7 +63,6 @@
 
 #define VITA_NET_MEM_SIZE 1 * 1024 * 1024
 
-
 SceNetInitParam net_param = {
   .memory = NULL,
   .size = VITA_NET_MEM_SIZE,

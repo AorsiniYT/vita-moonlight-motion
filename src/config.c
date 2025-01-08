@@ -26,7 +26,6 @@
 #include <string.h>
 #include <getopt.h>
 #include <ini.h>
-#include "graphics.h"
 #include "input/vita.h"
 
 extern char* strdup(const char*);
@@ -250,7 +249,6 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   config->mapping = NULL;
   config->key_dir[0] = 0;
 
-  //char* config_file = get_path("moonlight.conf", "ux0:data/moonlight/");
   char* config_file = config_path;
   if (config_file) {
     config_file_parse(config_file, config);

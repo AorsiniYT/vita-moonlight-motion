@@ -25,7 +25,6 @@
 
 #include "debug.h"
 #include "config.h"
-#include "psp2/kernel/threadmgr/thread.h"
 
 pthread_mutex_t print_mutex;
 
@@ -41,12 +40,12 @@ void vita_debug_log(const char *s, ...) {
     return;
   }
 
+  pthread_mutex_lock(&print_mutex);
+
   char* buffer = malloc(8192);
   if (!buffer) {
     return;
   }
-
-  pthread_mutex_lock(&print_mutex);
 
   SceDateTime time;
   sceRtcGetCurrentClock(&time, 0);
