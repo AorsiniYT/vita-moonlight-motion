@@ -15,7 +15,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <ctype.h>
 
 #include <psp2/ctrl.h>
 #include <psp2/rtc.h>
@@ -23,6 +22,8 @@
 #include <psp2/videodec.h>
 #include <vita2d.h>
 #include <Limelight.h>
+
+extern char* strdup(const char *);
 
 static unsigned int settings_special_codes[] = {0,
   // special
@@ -805,7 +806,7 @@ int ui_settings_menu() {
   MENU_ENTRY(SETTINGS_SHOW_FPS, SETTINGS_VIEW_SHOW_FPS, "Display streaming FPS", "");
 
   MENU_CATEGORY("Input");
-  MENU_ENTRY(SETTINGS_ENABLE_MOTION_CONTROLS, SETTINGS_VIEW_ENABLE_MOTION_CONTROLS, "Enable motion controls (L)", "");
+  MENU_ENTRY(SETTINGS_ENABLE_MOTION_CONTROLS, SETTINGS_VIEW_ENABLE_MOTION_CONTROLS, "Enable Gyroscope reporting", "");
   MENU_ENTRY(SETTINGS_ENABLE_DOUBLE_TAP_SPRINT, SETTINGS_VIEW_ENABLE_DOUBLE_TAP_SPRINT, "Enable double tap to sprint", "");
   MENU_ENTRY(SETTINGS_MOUSE_ACCEL, SETTINGS_VIEW_MOUSE_ACCEL, "Mouse acceleration", ICON_LEFT_RIGHT_ARROWS);
   MENU_ENTRY(SETTINGS_ENABLE_MAPPING, SETTINGS_VIEW_ENABLE_MAPPING, "Enable mapping file", "");

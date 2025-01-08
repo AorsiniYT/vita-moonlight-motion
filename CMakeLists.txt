@@ -51,7 +51,6 @@ add_executable(${PROJECT_NAME}.elf
 	src/config.c
 	src/input/mapping.c
 	src/connection.c
-	src/global.c
 	src/debug.c
 	src/main.c
 	src/platform.c

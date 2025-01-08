@@ -149,7 +149,6 @@ int ui_connect_loop(int id, void *context, const input_data *input) {
       }
 
       char pin[5];
-      char message[256];
       sprintf(pin, "%d%d%d%d",
               (uint32_t)rand() % 10, (uint32_t)rand() % 10, (uint32_t)rand() % 10, (uint32_t)rand() % 10);
       flash_message("Please enter the following PIN\non the target PC:\n\n%s", pin);
@@ -199,7 +198,7 @@ int ui_connect_loop(int id, void *context, const input_data *input) {
           break;
       }
 
-mainloop:
+//mainloop:
       while (connection_is_connected()) {
         sceKernelDelayThread(500 * 1000);
       }
@@ -407,7 +406,6 @@ device_info_t* ui_connect_and_pairing(device_info_t *info) {
   }
 
   char pin[5];
-  char message[256];
   sprintf(pin, "%d%d%d%d",
           (int)rand() % 10, (int)rand() % 10, (int)rand() % 10, (int)rand() % 10);
   flash_message("Please enter the following PIN\non the target PC:\n\n%s", pin);
@@ -483,11 +481,11 @@ void ui_connect_paired_device(device_info_t *info) {
   }
 
   char *addr = NULL;
-  if (info->prefer_external && info->external && check_connection(info->name, info->external, info->port)) {
+  if (info->prefer_external && check_connection(info->name, info->external, info->port)) {
     addr = info->external;
-  } else if (info->internal && check_connection(info->name, info->internal, info->port)) {
+  } else if (check_connection(info->name, info->internal, info->port)) {
     addr = info->internal;
-  } else if (info->external && check_connection(info->name, info->external, info->port)) {
+  } else if (check_connection(info->name, info->external, info->port)) {
     addr = info->external;
   }
   info->prefer_external = addr == info->external;

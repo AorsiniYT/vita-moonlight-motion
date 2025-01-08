@@ -23,8 +23,6 @@
 #include "../gui/guilib.h"
 #include "../util.h"
 #include "../input/vita.h"
-#include "openssl/buffer.h"
-#include "sys/_stdint.h"
 #include "vita.h"
 #include "sps.h"
 

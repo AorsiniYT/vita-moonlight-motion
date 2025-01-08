@@ -20,7 +20,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
-#include <ctype.h>
 
 #include <psp2/ctrl.h>
 #include <psp2/rtc.h>
@@ -58,7 +57,6 @@ static device_info_t devices[64];
 static int DEVICE_ENTRY_IDX[64];
 static int found_device = 0;
 
-static char addrbuffer[64];
 static char namebuffer[256];
 
 void ipv4_address_to_string(const struct sockaddr_in *addr, char *ip, const size_t len) {
@@ -188,6 +186,7 @@ int end_search_thread(SceUID thid) {
   } while (sceKernelWaitThreadEnd(thid, NULL, &timeout) < 0);
 
   sceKernelDeleteThread(thid);
+  //TODO: Return thing here
 }
 
 static int ui_search_device_callback(int id, void *context, const input_data *input) {
@@ -198,12 +197,10 @@ static int ui_search_device_callback(int id, void *context, const input_data *in
     }
     return 0;
   }
-  menu_entry *menu = context;
   if (id == DEVICE_EXIT_SEARCH) {
     return 1;
   }
   if (id >= DEVICE_ITEM) {
-    SERVER_DATA server;
 
     device_info_t *info = ui_connect_and_pairing(&devices[id - DEVICE_ITEM]);
     if (info == NULL) {
@@ -222,6 +219,7 @@ static int ui_search_device_callback(int id, void *context, const input_data *in
 
     return 1;
   }
+  //TODO: Return proper on all code paths
 }
 
 static int ui_search_device_back(void *context) {
