@@ -1,8 +1,3 @@
-# Motion Branch
-
-This branch is for fully emulating motion controls for the vita, using DS5 emulation.
-
-
 # Vita Moonlight
 
 This is a vita port of Moonlight Embedded.
@@ -22,7 +17,6 @@ If somehow these features are wanted in the original project, please reach out a
 
 ## Planned Features (In order of feasibility)
 
-- Adjustable double tap to sprint delay
 - Manual option to choose remote or local connection
 - Fix for quitting apps
 - Fix for pairing to host
@@ -34,13 +28,11 @@ If somehow these features are wanted in the original project, please reach out a
 - Update moonlight-common-c and enet
 - moonlight-common-c now uses pthreads for threading (fix re-entry crash)
 - enet has additional definitions for networking
-- Disabled video slicing (for now)
 - Increase video decoder buffer size (fix for crashing with VA-API)
 
 ## Known Issues
 
 - Quitting an app directly after streaming does not work
-- Losing connection, then trying to reconnect is buggy
 - Pairing from "Resume from <>" dialog does not save paired info
 - Pairing from search devices and manual works, but doesn't update the menu requiring a restart
 

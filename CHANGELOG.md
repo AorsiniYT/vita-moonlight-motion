@@ -1,4 +1,20 @@
-## Unreleased
+## 0.11.0
+
+* The hold L to activate gyro feature has been removed and replaced with gyro reporting.
+this means that the client will try to get Sunshine to emulate a DS5 controller and gyro will
+be reported. This opens up full configurability with steam input. Note this only works on Windows
+or on Linux with Pre-release versions of Sunshine as of 1/10/25. This could be different in the future.
+* Video slicing added back
+* Logging added to pairing for debug
+* An icon to indicate when the double tap sprinting has been enables has been added<
+
+## 0.10.1
+* Fix pairing issue (Same one from v0.9.3)
+
+## 0.10.0
+* Add double tap to sprint option
+* Add motion controls
+* Fork moonlight-common-c and enet
 
 ## 0.9.3
 * Fix pairing issue (#231, 5494d93)
