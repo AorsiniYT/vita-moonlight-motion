@@ -7,9 +7,12 @@
 #include "../debug.h"
 #include "vita.h"
 
+#include "psp2/power.h"
+
+
 
 // TODO: Config Value
-static uint32_t MOTION_SCALE = 25;
+static uint32_t MOTION_SCALE = 28;
 
 bool active_motion_threads = false;
 
@@ -23,7 +26,6 @@ motion_data_state motion_state = {
 bool vita_motion_init() {
 
     sceMotionStartSampling();
-    sceMotionSetDeadband(true);
     sceMotionReset();
 
     SceUID thid = sceKernelCreateThread("vitainput_motion_gyro_thread", vitainput_motion_gyro_thread, 0, 0x40000, 0, 0, NULL);
@@ -46,10 +48,24 @@ int vitainput_motion_gyro_thread(SceSize args, void *argp) {
   while (1) {
     if (motion_state.motion_type_gyro_enabled == true && active_motion_threads == true) {
       motion_process_gyro();
+
+      //TODO: Reporting battery events more than one time per second seems unwise
+      //Possible solutions: New thread (heavy handed), using main thread (Idk)
+
+      /* uint32_t battery_percent = scePowerGetBatteryLifePercent();
+      
+      uint8_t battery_state;
+      if (scePowerIsBatteryCharging()) {
+        battery_state = LI_BATTERY_STATE_CHARGING;
+      } else {
+        battery_state = LI_BATTERY_STATE_DISCHARGING;
+      }
+
+      LiSendControllerBatteryEvent(0, battery_state, battery_percent); */
+
     } else {
       sceKernelDelayThread(1000000);
     }
-    //1000/report rate = delay * 1000 (us)
     sceKernelDelayThread((1000/motion_state.report_rate_gyro) * 1000);
   }
   
@@ -93,7 +109,7 @@ void motion_process_accel() {
   sceMotionGetState(&motionState);
 
   float vx = motionState.acceleration.x;
-  float vy = motionState.acceleration.z * -1;
+  float vy = motionState.acceleration.z;
   float vz = motionState.acceleration.y * -1;
 
   vx = vx * MOTION_SCALE;

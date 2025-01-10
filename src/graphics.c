@@ -55,8 +55,6 @@ int psvDebugScreenGetY() {
 	return gY;
 }
 
- // #define LOG(args...)  		vita_logf (__FILE__, __LINE__, args)  ///< Write a log entry
-
 int g_log_mutex;
 
 void psvDebugScreenInit() {

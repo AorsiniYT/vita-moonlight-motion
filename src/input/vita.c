@@ -17,6 +17,7 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -26,15 +27,12 @@
 #include <sys/types.h>
 #include <openssl/rand.h>
 #include <openssl/evp.h>
-#include <ctype.h>
 
-#include "../graphics.h"
 #include "../connection.h"
 #include "../config.h"
 #include "../debug.h"
 #include "psp2/kernel/threadmgr/thread.h"
 #include "psp2common/types.h"
-#include "sys/_stdint.h"
 #include "vita.h"
 #include "mapping.h"
 
