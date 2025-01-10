@@ -143,7 +143,7 @@ int main(int argc, char* argv[]) {
   }
 
   if (!vita_motion_init()) {
-    printf("Failed to init input!");
+    printf("Failed to init motion input!");
     loop_forever();
   }
 
