@@ -12,6 +12,7 @@
 #define ICON_NETWORK      "\xef\xa6\x8c"
 #define ICON_SPRINTING    "\xeF\xa5\xaD"
 
+
 typedef struct menu_entry {
   int id;
   unsigned int color;

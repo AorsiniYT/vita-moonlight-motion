@@ -9,7 +9,6 @@
 #include "../debug.h"
 
 #include <assert.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,7 +22,7 @@
 #include <vita2d.h>
 #include <Limelight.h>
 
-extern char* strdup(const char *);
+extern char* strdup(const char*);
 
 static unsigned int settings_special_codes[] = {0,
   // special
@@ -404,7 +403,10 @@ enum {
   SETTINGS_ENABLE_STREAM_OPTIMIZE,
   SETTINGS_ENABLE_VITA_VBLANK_WAIT,
   SETTINGS_ENABLE_MOTION_CONTROLS, //Metalface
+  SETTINGS_MOTION_CONTROLS_SCALAR_X,
+  SETTINGS_MOTION_CONTROLS_SCALAR_Y,
   SETTINGS_ENABLE_DOUBLE_TAP_SPRINT, //Metalface
+  SETTINGS_DOUBLE_TAP_SPRINT_STEP_TIME,
   SETTINGS_SAVE_DEBUG_LOG,
   SETTINGS_DISABLE_POWERSAVE,
   SETTINGS_JP_LAYOUT,
@@ -427,7 +429,10 @@ enum {
   SETTINGS_VIEW_ENABLE_STREAM_OPTIMIZE,
   SETTINGS_VIEW_ENABLE_VITA_VBLANK_WAIT,
   SETTINGS_VIEW_ENABLE_MOTION_CONTROLS, //Metalface
+  SETTINGS_VIEW_MOTION_CONTROLS_SCALAR_X,
+  SETTINGS_VIEW_MOTION_CONTROLS_SCALAR_Y,
   SETTINGS_VIEW_ENABLE_DOUBLE_TAP_SPRINT, //Metalface
+  SETTINGS_VIEW_DOUBLE_TAP_SPRINT_STEP_TIME,
   SETTINGS_VIEW_SAVE_DEBUG_LOG,
   SETTINGS_VIEW_DISABLE_POWERSAVE,
   SETTINGS_VIEW_JP_LAYOUT,
@@ -536,15 +541,17 @@ static int settings_loop(int id, void *context, const input_data *input) {
       if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
         break;
       }
-      char value[512];
-      int ret;
-      if ((ret = ime_dialog_number(value, "Enter bitrate: ", "")) == 0) {
-        int bitrate = atoi(value);
-        if (bitrate) {
-          config.stream.bitrate = bitrate;
-          did_change = 1;
-        } else {
-          display_error("Incorrect bitrate entered: %s", value);
+      {
+        char value[512];
+        int ret;
+        if ((ret = ime_dialog_number(value, "Enter bitrate: ", "")) == 0) {
+          int bitrate = atoi(value);
+          if (bitrate) {
+            config.stream.bitrate = bitrate;
+            did_change = 1;
+          } else {
+            display_error("Incorrect bitrate entered: %s", value);
+          }
         }
       }
       break;
@@ -584,12 +591,66 @@ static int settings_loop(int id, void *context, const input_data *input) {
       did_change = 1;
       config.enable_motion_controls = config.enable_motion_controls ? 0 : 1;
       break;
+    case SETTINGS_MOTION_CONTROLS_SCALAR_X:
+      if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
+          break;
+      }
+      {
+        char value[512];
+        int ret;
+        if ((ret = ime_dialog_number(value, "Enter Motion Sensitvity Scalar X", "")) == 0) {
+          float scalar = atof(value);
+          if (scalar) {
+            config.motion_controls_scalar_x = scalar;
+            did_change = 1;
+          } else {
+            display_error("Incorrect scalar entered: %s", value);
+          }
+        }
+        break;
+      }
+    case SETTINGS_MOTION_CONTROLS_SCALAR_Y:
+      if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
+          break;
+      }
+      {
+        char value[512];
+        int ret;
+        if ((ret = ime_dialog_number(value, "Enter Motion Sensitvity Scalar Y", "")) == 0) {
+          float scalar = atof(value);
+          if (scalar) {
+            config.motion_controls_scalar_y = scalar;
+            did_change = 1;
+          } else {
+            display_error("Incorrect scalar entered: %s", value);
+          }
+        }
+      }
+      break;
     case SETTINGS_ENABLE_DOUBLE_TAP_SPRINT:
       if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
           break;
       }
       did_change = 1;
       config.enable_double_tap_sprint = config.enable_double_tap_sprint ? 0 : 1;
+      break;
+    case SETTINGS_DOUBLE_TAP_SPRINT_STEP_TIME:
+      if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
+          break;
+      }
+      {
+        char value[512];
+        int ret;
+        if ((ret = ime_dialog_number(value, "Enter Sprint Step Time in Milliseconds", "")) == 0) {
+          int stp = atoi(value);
+          if (stp) {
+            config.double_tap_sprint_step_time = stp;
+            did_change = 1;
+          } else {
+            display_error("Incorrect step time entered: %s", value);
+          }
+        }
+      }
       break;
     //Metalface--
     case SETTINGS_SAVE_DEBUG_LOG:
@@ -722,8 +783,17 @@ static int settings_loop(int id, void *context, const input_data *input) {
   sprintf(current, "%s", config.enable_motion_controls ? "yes" : "no");
   MENU_REPLACE(SETTINGS_VIEW_ENABLE_MOTION_CONTROLS, current);
 
+  sprintf(current, "%f", config.motion_controls_scalar_x);
+  MENU_REPLACE(SETTINGS_VIEW_MOTION_CONTROLS_SCALAR_X, current);
+
+  sprintf(current, "%f", config.motion_controls_scalar_y);
+  MENU_REPLACE(SETTINGS_VIEW_MOTION_CONTROLS_SCALAR_Y, current);
+
   sprintf(current, "%s", config.enable_double_tap_sprint ? "yes" : "no");
   MENU_REPLACE(SETTINGS_VIEW_ENABLE_DOUBLE_TAP_SPRINT, current);
+
+  sprintf(current, "%u", config.double_tap_sprint_step_time);
+  MENU_REPLACE(SETTINGS_VIEW_DOUBLE_TAP_SPRINT_STEP_TIME, current);
   //Metalface
 
   sprintf(current, "%s", config.disable_powersave ? "yes" : "no");
@@ -806,8 +876,10 @@ int ui_settings_menu() {
   MENU_ENTRY(SETTINGS_SHOW_FPS, SETTINGS_VIEW_SHOW_FPS, "Display streaming FPS", "");
 
   MENU_CATEGORY("Input");
+
   MENU_ENTRY(SETTINGS_ENABLE_MOTION_CONTROLS, SETTINGS_VIEW_ENABLE_MOTION_CONTROLS, "Enable Gyroscope reporting", "");
   MENU_ENTRY(SETTINGS_ENABLE_DOUBLE_TAP_SPRINT, SETTINGS_VIEW_ENABLE_DOUBLE_TAP_SPRINT, "Enable double tap to sprint", "");
+  MENU_ENTRY(SETTINGS_DOUBLE_TAP_SPRINT_STEP_TIME, SETTINGS_VIEW_DOUBLE_TAP_SPRINT_STEP_TIME, "Double tap sprint step time (lower means you have to be faster)", "");
   MENU_ENTRY(SETTINGS_MOUSE_ACCEL, SETTINGS_VIEW_MOUSE_ACCEL, "Mouse acceleration", ICON_LEFT_RIGHT_ARROWS);
   MENU_ENTRY(SETTINGS_ENABLE_MAPPING, SETTINGS_VIEW_ENABLE_MAPPING, "Enable mapping file", "");
   MENU_MESSAGE("Located at ux0:data/moonlight/mappings/vita.conf");
@@ -816,7 +888,7 @@ int ui_settings_menu() {
   MENU_ENTRY(SETTINGS_SPECIAL_KEYS, SETTINGS_VIEW_SPECIAL_KEYS, "Touchscreen special keys", "");
 
   settings_loop_setup = 1;
-  assert(idx < 32);
+  assert(idx < 48);
   return display_menu(menu, idx, NULL, &settings_loop, &settings_back, NULL, &menu);
 }
 

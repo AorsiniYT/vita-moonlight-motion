@@ -38,7 +38,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <stdarg.h>
 
 #define printf vita_debug_log
 

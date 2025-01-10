@@ -45,8 +45,6 @@
 const short Y_MAXIMIUM_DEADZONE = -32383;
 const short Y_MINIMUM_DEADZONE = -1024;
 
-const uint32_t DOUBLECLICK_STEP_TIME = 300000;
-
 double_click_tracker dc_tracker = {
   .y_max_once = false,
   .y_max_once_time = 0,
@@ -77,7 +75,7 @@ void check_for_double_click(input_data *curr);
 double mouse_multiplier;
 
 #define MOUSE_ACTION_DELAY 100000 // 100ms
-#define MOTION_ACTION_DELAY 500000 // 400ms
+#define MOTION_ACTION_DELAY 200000 // 200ms
 
 inline bool mouse_click(short finger_count, bool press) {
   int mode;
@@ -102,6 +100,25 @@ inline bool mouse_click(short finger_count, bool press) {
 inline void move_mouse(TouchData old, TouchData cur) {
   double delta_x = (cur.points[0].x - old.points[0].x) / 2.;
   double delta_y = (cur.points[0].y - old.points[0].y) / 2.;
+
+  if (delta_x == 0 && delta_y == 0) {
+    return;
+  }
+
+  int x = lround(delta_x * mouse_multiplier);
+  int y = lround(delta_y * mouse_multiplier);
+
+  LiSendMouseMoveEvent(x, y);
+}
+
+
+inline void move_motion(SceMotionState motionState) {
+  const float motion_scalar_x = config.motion_controls_scalar_x;
+  const float motion_scalar_y = config.motion_controls_scalar_y;
+
+  // Get the mouse position.
+  double delta_x = (deviceQuat_old.y-motionState.deviceQuat.y) * (float)MOUSE_SENSITIVITY * motion_scalar_x;
+  double delta_y = (deviceQuat_old.x-motionState.deviceQuat.x) * (float)MOUSE_SENSITIVITY * motion_scalar_y;
 
   if (delta_x == 0 && delta_y == 0) {
     return;
@@ -357,30 +374,36 @@ float QuatLength(SceFQuaternion v1, SceFQuaternion v2) {
 inline void check_for_double_click(input_data *curr) {
 //can uncomment this if I ever need to debug this
 //#define DOUBLETAP_DEBUG
+
+  uint64_t current_time = sceKernelGetSystemTimeWide();
+  uint32_t doubleclick_step_time = 0;
+  if (config.double_tap_sprint_step_time) {
+    doubleclick_step_time = config.double_tap_sprint_step_time * 1000;
+  }
+
 //Condition 1: Y is maximum
   if (curr->ly < Y_MAXIMIUM_DEADZONE && !dc_tracker.y_max_once && !dc_tracker.currently_sprinting) {
     #ifdef DOUBLETAP_DEBUG
     vita_debug_log("Condition one triggered, current Y: %d", curr.ly);
     #endif
     dc_tracker.y_max_once = true;  
-    dc_tracker.y_max_once_time = sceKernelGetSystemTimeWide();
+    dc_tracker.y_max_once_time = current_time;
     #ifdef DOUBLETAP_DEBUG
     vita_debug_log("Stamping y_max_once_time at: %llu", dc_tracker.y_max_once_time);
     #endif
   }
 
-  //Condition 2: Y is minimum and less than 100ms has passed
+  //Condition 2: Y is minimum and less than doubleclicksteptime ms has passed
   if (dc_tracker.y_max_once && curr->ly > Y_MINIMUM_DEADZONE && !dc_tracker.returned_to_center && !dc_tracker.currently_sprinting) {
     #ifdef DOUBLETAP_DEBUG
     vita_debug_log("Condition two triggered, current Y: %d", curr.ly);
     #endif
-    uint64_t current_time = sceKernelGetSystemTimeWide();
-    if ((current_time - dc_tracker.y_max_once_time) < DOUBLECLICK_STEP_TIME) {
+    if ((current_time - dc_tracker.y_max_once_time) < doubleclick_step_time) {
       #ifdef DOUBLETAP_DEBUG
       vita_debug_log("Condition two: Y max once was less than step time, delta: %llu", current_time-dc_tracker.y_max_once_time);
       #endif
       dc_tracker.returned_to_center = true;
-      dc_tracker.returned_to_center_time = sceKernelGetSystemTimeWide();
+      dc_tracker.returned_to_center_time = current_time;
       #ifdef DOUBLETAP_DEBUG
       vita_debug_log("Condition two: Stamping returned_to_center_time at: %llu", dc_tracker.returned_to_center_time);
       #endif
@@ -397,10 +420,9 @@ inline void check_for_double_click(input_data *curr) {
     #ifdef DOUBLETAP_DEBUG
     vita_debug_log("Condition three triggered, current Y: %d", curr.ly);
     #endif
-    uint64_t current_time = sceKernelGetSystemTimeWide();
     dc_tracker.y_max_once = false;
     dc_tracker.returned_to_center = false;
-    if ((current_time - dc_tracker.returned_to_center_time) < DOUBLECLICK_STEP_TIME) {
+    if ((current_time - dc_tracker.returned_to_center_time) < doubleclick_step_time) {
       #ifdef DOUBLETAP_DEBUG
       vita_debug_log("Condition three: return to center was less than step time, delta: %llu", current_time - dc_tracker.returned_to_center_time);
       vita_debug_log("Should be sprinting");
@@ -414,14 +436,13 @@ inline void check_for_double_click(input_data *curr) {
 
     //if we haven't returned to the center yet, mark that we have
     if (!dc_tracker.sprinting_returned_center) {
-      dc_tracker.sprinting_returned_center_time = sceKernelGetSystemTimeWide();
+      dc_tracker.sprinting_returned_center_time = current_time;
       dc_tracker.sprinting_returned_center = true;
     } else {
       //we've already returned to the center, see how long we've been here
       if ((sceKernelGetSystemTimeWide() - dc_tracker.sprinting_returned_center_time) > 50000) {
         dc_tracker.currently_sprinting = false;
         dc_tracker.sprinting_returned_center = false;
-
       }
     }
     //Mark that we've returned to center
