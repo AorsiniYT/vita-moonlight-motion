@@ -22,16 +22,13 @@
 #include "platform.h"
 #include "audio.h"
 
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-// #include <dlfcn.h>
 
 
 typedef bool(*ImxInit)();
 
 enum platform platform_check(char* name) {
-  //bool std = strcmp(name, "default") == 0;
   if (strcmp(name, "vita") == 0)
     return VITA;
   return 0;

@@ -30,7 +30,7 @@ add_definitions(-DVERSION_MAJOR=${VERSION_MAJOR})
 add_definitions(-DVERSION_MINOR=${VERSION_MINOR})
 add_definitions(-DVERSION_PATCH=${VERSION_PATCH})
 
-set(CMAKE_C_FLAGS "-Wl,-q -Ofast -std=c99 -D__vita__")
+set(CMAKE_C_FLAGS "-Wl,-q -g -std=c99 -D__vita__")
 
 
 
@@ -51,9 +51,7 @@ add_executable(${PROJECT_NAME}.elf
 	src/config.c
 	src/input/mapping.c
 	src/connection.c
-	src/global.c
 	src/debug.c
-	src/loop.c
 	src/main.c
 	src/platform.c
 	src/util.c
@@ -63,6 +61,7 @@ add_executable(${PROJECT_NAME}.elf
 	src/video/vita.c
 	src/input/vita.c
 	src/power/vita.c
+	src/input/motion.c
 	src/graphics.c
 	src/font.c
 	src/gui/guilib.c

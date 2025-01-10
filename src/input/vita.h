@@ -30,7 +30,6 @@
 #include <psp2/rtc.h>
 
 
-
 typedef enum {
   NO_TOUCH_ACTION = 0,
   ON_SCREEN_TOUCH,
@@ -58,6 +57,13 @@ typedef enum {
   LEFT_TRIGGER,
   RIGHT_TRIGGER
 } PadSection;
+
+typedef struct motion_data_state {
+    bool motion_type_gyro_enabled;
+    bool motion_type_accel_enabled;
+    uint16_t report_rate_gyro;
+    uint16_t report_rate_accel;
+} motion_data_state;
 
 typedef struct double_click_tracker {
   bool y_max_once;

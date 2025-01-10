@@ -24,13 +24,13 @@
 #include "input/vita.h"
 #include "video/vita.h"
 #include "audio/vita.h"
-
-#include <stdio.h>
 #include <stdbool.h>
 
 #include "debug.h"
 
 static int connection_status = LI_DISCONNECTED;
+
+extern motion_data_state motion_state;
 
 int connection_stage = 0;
 
@@ -88,7 +88,7 @@ static void connection_connection_terminated(int error_code) {
       break;
     default:
       vita_debug_log("Connection terminated with error: %d\n", error_code);
-      break;
+      break;    
   }
 
   LiStopConnection();
@@ -189,6 +189,43 @@ void connection_status_update(int status) {
   }
 }
 
+void connection_set_motion_state(uint16_t controller, uint8_t motion_type, uint16_t report_rate) {
+  vita_debug_log("Set motion state called, controller: %u, Type: %u, Report rate: %u", controller, motion_type, report_rate);
+
+  //TODO: Multicontroller support here someday? Can't afford pstv tho
+  if (config.enable_motion_controls == false) {
+    vita_debug_log("Ignored gyro request due to config");
+    return;
+  }
+
+  if (report_rate == 0) {
+    switch (motion_type) {
+      case LI_MOTION_TYPE_GYRO:
+        motion_state.motion_type_gyro_enabled = false;
+        motion_state.report_rate_gyro = 1;
+        break;
+      case LI_MOTION_TYPE_ACCEL:
+        motion_state.motion_type_accel_enabled = false;
+        motion_state.report_rate_accel = 1;
+        break;
+    }
+  } else {
+
+    switch (motion_type) {
+      case LI_MOTION_TYPE_GYRO:
+        motion_state.motion_type_gyro_enabled = true;
+        motion_state.report_rate_gyro = report_rate;
+        vita_debug_log("Setting gyro state true");
+        break;
+      case LI_MOTION_TYPE_ACCEL:
+        motion_state.motion_type_accel_enabled = true;
+        motion_state.report_rate_accel = report_rate;
+        vita_debug_log("Setting accel state true");
+        break;
+    }
+  }
+}
+
 CONNECTION_LISTENER_CALLBACKS connection_callbacks = {
   .stageStarting = connection_stage_starting,
   .stageComplete = connection_stage_complate,
@@ -197,4 +234,5 @@ CONNECTION_LISTENER_CALLBACKS connection_callbacks = {
   .connectionTerminated = connection_connection_terminated,
   .connectionStatusUpdate = connection_status_update,
   .logMessage = vita_debug_log,
+  .setMotionEventState = connection_set_motion_state
 };

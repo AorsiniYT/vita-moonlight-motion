@@ -21,7 +21,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <ctype.h>
 
 #include <psp2/kernel/threadmgr.h>
 #include <psp2/ctrl.h>

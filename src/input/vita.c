@@ -17,6 +17,7 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -32,7 +33,6 @@
 #include "../debug.h"
 #include "psp2/kernel/threadmgr/thread.h"
 #include "psp2common/types.h"
-#include "sys/_stdint.h"
 #include "vita.h"
 #include "mapping.h"
 
@@ -111,6 +111,7 @@ inline void move_mouse(TouchData old, TouchData cur) {
   LiSendMouseMoveEvent(x, y);
 }
 
+
 inline void move_motion(SceMotionState motionState) {
   const float motion_scalar_x = config.motion_controls_scalar_x;
   const float motion_scalar_y = config.motion_controls_scalar_y;
@@ -128,6 +129,7 @@ inline void move_motion(SceMotionState motionState) {
 
   LiSendMouseMoveEvent(x, y);
 }
+
 
 inline void move_wheel(TouchData old, TouchData cur) {
   int old_y = (old.points[0].y + old.points[1].y) / 2;
@@ -458,15 +460,14 @@ inline void check_for_double_click(input_data *curr) {
   }
 }
 
+
 inline void vitainput_process(void) {
   memset(&pad, 0, sizeof(pad));
   memset(&touch, 0, sizeof(TouchData));
   memset(&curr, 0, sizeof(input_data));
   sceCtrlSetSamplingModeExt(SCE_CTRL_MODE_ANALOG_WIDE);
   sceCtrlPeekBufferPositiveExt2(controller_port, &pad, 1);
-  if (config.enable_motion_controls) {
-    sceMotionGetState(&motionState);
-  }
+
   sceTouchPeek(SCE_TOUCH_PORT_FRONT, &front, 1);
   sceTouchPeek(SCE_TOUCH_PORT_BACK, &back, 1);
   read_frontscreen();
@@ -512,26 +513,7 @@ inline void vitainput_process(void) {
           is_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SE),
           is_old_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SE));
 
-  if (config.enable_motion_controls) {
-    //Resetting motion causes downwards jerk temporary code to prevent
-    if(sceRtcCompareTick(&current, &until) > 0 && !_calibrateGyro){
-      move_motion(motionState);
-    }
-
-    if((is_pressed(map.btn_tl))){
-      if(_calibrateGyro){
-        sceMotionReset();
-        sceRtcTickAddMicroseconds(&until, &current, MOTION_ACTION_DELAY);
-        _motionResetCount = 1;
-      }
-      _calibrateGyro = false;
-    }else{
-      _calibrateGyro = true;
-      _motionCalibrated = false;
-      _motionResetCount = 0;
-    }
-    memcpy(&deviceQuat_old, &motionState.deviceQuat, sizeof(struct SceFQuaternion));
-  }
+  
 
   if (config.enable_double_tap_sprint) {
     check_for_double_click(&curr);
@@ -593,8 +575,7 @@ inline void vitainput_process(void) {
   }
 
   if (memcmp(&curr, &old, sizeof(input_data)) != 0) {
-    LiSendControllerEvent(curr.button, curr.lt, curr.rt,
-                          curr.lx, -1 * curr.ly, curr.rx, -1 * curr.ry);
+    LiSendMultiControllerEvent(0, 1, curr.button, curr.lt, curr.rt, curr.lx, -1 * curr.ly, curr.rx, -1 * curr.ry);
     memcpy(&old, &curr, sizeof(input_data));
     memcpy(&pad_old, &pad, sizeof(SceCtrlData));
   }
@@ -621,8 +602,7 @@ bool vitainput_init() {
   sceCtrlSetSamplingModeExt(SCE_CTRL_MODE_ANALOG_WIDE);
   sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, SCE_TOUCH_SAMPLING_STATE_START);
   sceTouchSetSamplingState(SCE_TOUCH_PORT_BACK, SCE_TOUCH_SAMPLING_STATE_START);
-  sceMotionStartSampling();
-  
+
   SceUID thid = sceKernelCreateThread("vitainput_thread", vitainput_thread, 0, 0x40000, 0, 0, NULL);
   if (thid >= 0) {
     sceKernelStartThread(thid, 0, NULL);
@@ -722,10 +702,25 @@ void vitainput_config(CONFIGURATION config) {
   mouse_multiplier = 1 + (0.01 * config.mouse_acceleration);
 }
 
+extern bool active_motion_threads;
+
 void vitainput_start(void) {
+  uint16_t gamepadMask = 1;
+  uint32_t gamepadCapabilites = LI_CCAP_GYRO | LI_CCAP_BATTERY_STATE | LI_CCAP_ACCEL | LI_CCAP_TOUCHPAD;
+
+  uint32_t gamepadSupportedButtonFlags = 0xffff;
+  gamepadSupportedButtonFlags |= TOUCHPAD_FLAG;
+  gamepadSupportedButtonFlags |= MISC_FLAG;
+
+  LiSendControllerArrivalEvent(0, gamepadMask, LI_CTYPE_PS, gamepadSupportedButtonFlags, gamepadCapabilites);
+
+  LiSendControllerBatteryEvent(0, LI_BATTERY_STATE_FULL, 100);
+
   active_input_thread = true;
+  active_motion_threads = true;
 }
 
 void vitainput_stop(void) {
   active_input_thread = false;
+  active_motion_threads = false;
 }

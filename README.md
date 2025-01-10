@@ -1,3 +1,8 @@
+# Motion Branch
+
+This branch is for fully emulating motion controls for the vita, using DS5 emulation.
+
+
 # Vita Moonlight
 
 This is a vita port of Moonlight Embedded.

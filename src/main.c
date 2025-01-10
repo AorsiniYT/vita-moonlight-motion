@@ -17,7 +17,6 @@
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "loop.h"
 #include "connection.h"
 #include "configuration.h"
 #include "audio.h"
@@ -58,6 +57,9 @@
 #include "gui/ui.h"
 #include "util.h"
 #include "power/vita.h"
+#include "input/motion.h"
+
+#include "debug.h"
 
 #define VITA_NET_MEM_SIZE 1 * 1024 * 1024
 
@@ -109,11 +111,19 @@ static void vita_init() {
   ret = sceNetCtlInit();
   if (ret < 0) {
     printf("Net Ctl init failed!");
+    loop_forever();
   }
 
   ret = curl_global_init(CURL_GLOBAL_ALL);
   if (ret < 0) {
     printf("CURL init failed!");
+    loop_forever();
+  }
+
+  ret = vita_debug_init();
+  if (ret != true) {
+    printf("Debug log mutex init failed!");
+    loop_forever();
   }
 }
 
@@ -129,6 +139,11 @@ int main(int argc, char* argv[]) {
 
   if (!vitainput_init()) {
     printf("Failed to init input!");
+    loop_forever();
+  }
+
+  if (!vita_motion_init()) {
+    printf("Failed to init motion input!");
     loop_forever();
   }
 

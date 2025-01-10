@@ -12,6 +12,7 @@
 #include "../config.h"
 #include "../util.h"
 #include "../device.h"
+#include "../debug.h"
 
 #include "client.h"
 #include "../platform.h"
@@ -60,6 +61,7 @@ int get_app_name(PAPP_LIST list, int id, char *name) {
 
 void ui_connect_stream(int appId) {
   // TODO support force controller id
+  vita_debug_log("Running gs_start_app...");
   int ret = gs_start_app(&server, &config.stream, appId, config.sops, config.localaudio, 1);
   if (ret < 0) {
     if (ret == GS_NOT_SUPPORTED_4K)
@@ -71,6 +73,7 @@ void ui_connect_stream(int appId) {
 
     return;
   }
+  vita_debug_log("App started.");
 
   enum platform system = VITA;
   int drFlags = 0;
@@ -85,9 +88,11 @@ void ui_connect_stream(int appId) {
     video_callback->capabilities &= ~CAPABILITY_REFERENCE_FRAME_INVALIDATION_AVC;
   }
 
+  vita_debug_log("Running LiStartConnection...");
   ret = LiStartConnection(&server.serverInfo, &config.stream, &connection_callbacks,
                           video_callback, platform_get_audio(system),
                           NULL, drFlags, NULL, 0);
+  vita_debug_log("Connection started.");
 
   if (ret == 0) {
     server.currentGame = appId;
@@ -144,7 +149,6 @@ int ui_connect_loop(int id, void *context, const input_data *input) {
       }
 
       char pin[5];
-      char message[256];
       sprintf(pin, "%d%d%d%d",
               (uint32_t)rand() % 10, (uint32_t)rand() % 10, (uint32_t)rand() % 10, (uint32_t)rand() % 10);
       flash_message("Please enter the following PIN\non the target PC:\n\n%s", pin);
@@ -194,7 +198,7 @@ int ui_connect_loop(int id, void *context, const input_data *input) {
           break;
       }
 
-mainloop:
+//mainloop:
       while (connection_is_connected()) {
         sceKernelDelayThread(500 * 1000);
       }
@@ -402,7 +406,6 @@ device_info_t* ui_connect_and_pairing(device_info_t *info) {
   }
 
   char pin[5];
-  char message[256];
   sprintf(pin, "%d%d%d%d",
           (int)rand() % 10, (int)rand() % 10, (int)rand() % 10, (int)rand() % 10);
   flash_message("Please enter the following PIN\non the target PC:\n\n%s", pin);
@@ -453,12 +456,20 @@ bool check_connection(const char *name, char *addr, uint16_t port) {
 
   flash_message("Check connecting to:\n %s:%d...", addr, port);
 
+  int log_level = 0;
+  if (config.save_debug_log) {
+    log_level = 3;
+  }
+
   char key_dir[4096];
   sprintf(key_dir, "%s/%s", config.key_dir, name);
 
-  if (gs_init(&server, addr, port, key_dir, 0, true) != GS_OK) {
+  if (gs_init(&server, addr, port, key_dir, log_level, true) != GS_OK) {
     return false;
   }
+
+  vita_debug_log("Connection check succeded.");
+
   connection_terminate();
   return true;
 }
@@ -470,11 +481,11 @@ void ui_connect_paired_device(device_info_t *info) {
   }
 
   char *addr = NULL;
-  if (info->prefer_external && info->external && check_connection(info->name, info->external, info->port)) {
+  if (info->prefer_external && check_connection(info->name, info->external, info->port)) {
     addr = info->external;
-  } else if (info->internal && check_connection(info->name, info->internal, info->port)) {
+  } else if (check_connection(info->name, info->internal, info->port)) {
     addr = info->internal;
-  } else if (info->external && check_connection(info->name, info->external, info->port)) {
+  } else if (check_connection(info->name, info->external, info->port)) {
     addr = info->external;
   }
   info->prefer_external = addr == info->external;

@@ -23,7 +23,6 @@
 #include "../gui/guilib.h"
 #include "../util.h"
 #include "../input/vita.h"
-#include "sys/_stdint.h"
 #include "vita.h"
 #include "sps.h"
 
@@ -39,9 +38,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if 1
+
 #define printf vita_debug_log
-#endif
 
 extern void gs_sps_stop();
 
@@ -325,6 +323,8 @@ static int vita_setup(int videoFormat, int width, int height, int redrawRate, vo
       goto cleanup;
     }
 
+    printf("Initalized Framebuffer");
+
     video_status++;
   }
 
@@ -350,6 +350,7 @@ static int vita_setup(int videoFormat, int width, int height, int redrawRate, vo
       ret = VITA_VIDEO_ERROR_INIT_LIB;
       goto cleanup;
     }
+    printf("Initalized AVC library");
     video_status++;
   }
 
@@ -561,7 +562,7 @@ void draw_indicators() {
   }
 
   if (dc_tracker.currently_sprinting) {
-    vita2d_font_draw_text(font, 800, 500, RGBA8(0xFF, 0xFF, 0xFF, 0xFF), 32, ICON_SPRINT);
+    vita2d_font_draw_text(font, 40, 50, RGBA8(0xFF, 0xFF, 0xFF, 0xAA), 48, ICON_SPRINTING);
   }
 
 }
@@ -593,6 +594,5 @@ DECODER_RENDERER_CALLBACKS decoder_callbacks_vita = {
   .setup = vita_setup,
   .cleanup = vita_cleanup,
   .submitDecodeUnit = vita_submit_decode_unit,
-  .capabilities = CAPABILITY_DIRECT_SUBMIT,
-  //CAPABILITY_SLICES_PER_FRAME(2) | TODO: Add back after stability testing
+  .capabilities = CAPABILITY_DIRECT_SUBMIT | CAPABILITY_SLICES_PER_FRAME(2)
 };

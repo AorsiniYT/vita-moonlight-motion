@@ -16,20 +16,31 @@
  * You should have received a copy of the GNU General Public License
  * along with Moonlight; if not, see <http://www.gnu.org/licenses/>.
  */
-#include "config.h"
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <psp2/rtc.h>
 #include <stdlib.h>
 
 #include "debug.h"
+#include "config.h"
 
+pthread_mutex_t print_mutex;
+
+bool vita_debug_init() {
+  if (pthread_mutex_init(&print_mutex, NULL) != 0) {
+    return false;
+  }
+  return true;
+}
 
 void vita_debug_log(const char *s, ...) {
   if (!config.save_debug_log) {
     return;
   }
+
+  pthread_mutex_lock(&print_mutex);
 
   char* buffer = malloc(8192);
   if (!buffer) {
@@ -56,5 +67,7 @@ void vita_debug_log(const char *s, ...) {
   fflush(config.log_file);
 
   free(buffer);
+
+  pthread_mutex_unlock(&print_mutex);
 }
 
