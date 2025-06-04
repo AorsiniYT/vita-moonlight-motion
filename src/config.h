@@ -80,6 +80,8 @@ typedef struct _CONFIGURATION {
   SceCtrlButtons btn_cancel;
   int pin;
   uint16_t port;
+  int keyboard_layout; // 0=EN_US, 1=ES_ES, 2=ES_LATAM
+  bool absolute_mouse; // Nuevo: guardar estado de mouse absoluto
 } CONFIGURATION, *PCONFIGURATION;
 
 extern CONFIGURATION config;

@@ -70,6 +70,8 @@ add_executable(${PROJECT_NAME}.elf
 	src/gui/ui_settings.c
 	src/gui/ui_connect.c
 	src/gui/ui_device.c
+	src/gui/ui_hotkey.c
+	src/gui/hotkey.c
 
 	libgamestream/client.c
 	libgamestream/http.c
@@ -125,6 +127,11 @@ add_executable(${PROJECT_NAME}.elf
 	third_party/enet/unix.c
 
 	third_party/inih/ini.c
+
+	src/keyboardsystem.c
+	src/input/keyboardkeys.c
+	src/gui/ui_keyboard.c
+	src/input/touchabsolute.c
 )
 
 target_link_libraries(${PROJECT_NAME}.elf

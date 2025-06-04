@@ -7,6 +7,7 @@
 #include "../input/vita.h"
 #include "../video/vita.h"
 #include "../debug.h"
+#include "../input/touchabsolute.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -28,6 +29,7 @@ static unsigned int settings_special_codes[] = {0,
   // special
   INPUT_TYPE_DEF_NAME | INPUT_TYPE_SPECIAL,
   INPUT_SPECIAL_KEY_PAUSE | INPUT_TYPE_SPECIAL,
+  INPUT_SPECIAL_KEY_KEYBOARD | INPUT_TYPE_SPECIAL,
   // gamepad
   INPUT_TYPE_DEF_NAME | INPUT_TYPE_GAMEPAD,
   SPECIAL_FLAG | INPUT_TYPE_GAMEPAD,
@@ -50,10 +52,13 @@ static unsigned int settings_special_codes[] = {0,
   112,  113,  114,  115,  116,  117,  118,  119, 120,   121,   122,   123
 };
 
-static char *settings_special_names[] = {"None",
+// settings_special_names debe ser visible globalmente para sizeof
+char *settings_special_names[] = {
+  "None",
   // special
   "Special inputs",
   "Pause stream",
+  "Open keyboard",
   // gamepad
   "Gamepad buttons",
   "Special (XBox button)",
@@ -349,6 +354,7 @@ static void special_keys_draw() {
             special_size,
             special_size,
             color);
+        // fallthrough
       case TOUCHSEC_SPECIAL_SE:
         vita2d_draw_rectangle(
             WIDTH - special_size - special_offset,
@@ -356,6 +362,7 @@ static void special_keys_draw() {
             special_size,
             special_size,
             color);
+        // fallthrough
       case TOUCHSEC_SPECIAL_NW:
         vita2d_draw_rectangle(
             special_offset,
@@ -363,6 +370,7 @@ static void special_keys_draw() {
             special_size,
             special_size,
             color);
+        // fallthrough
       case TOUCHSEC_SPECIAL_NE:
         vita2d_draw_rectangle(
             WIDTH - special_size - special_offset,
@@ -417,7 +425,10 @@ enum {
   SETTINGS_ENABLE_MAPPING,
   SETTINGS_BACK_DEADZONE,
   SETTINGS_SPECIAL_KEYS,
+  SETTINGS_HOTKEYS,
   SETTINGS_MOUSE_ACCEL,
+  SETTINGS_KEYBOARD_LAYOUT,
+  SETTINGS_ABSOLUTE_MOUSE
 };
 
 enum {
@@ -443,7 +454,10 @@ enum {
   SETTINGS_VIEW_ENABLE_MAPPING,
   SETTINGS_VIEW_BACK_DEADZONE,
   SETTINGS_VIEW_SPECIAL_KEYS,
+  SETTINGS_VIEW_HOTKEYS,
   SETTINGS_VIEW_MOUSE_ACCEL,
+  SETTINGS_VIEW_KEYBOARD_LAYOUT,
+  SETTINGS_VIEW_ABSOLUTE_MOUSE,
 
   SETTINGS_VIEW_MAX_COUNT,
 };
@@ -727,6 +741,12 @@ static int settings_loop(int id, void *context, const input_data *input) {
       }
       special_keys_menu();
       break;
+    case SETTINGS_HOTKEYS:
+      if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
+        break;
+      }
+      hotkeys_menu();
+      break;
     case SETTINGS_MOUSE_ACCEL:
       left = input->buttons & SCE_CTRL_LEFT;
       right = input->buttons & SCE_CTRL_RIGHT;
@@ -746,6 +766,21 @@ static int settings_loop(int id, void *context, const input_data *input) {
       }
 
       did_change = 1;
+      break;
+    case SETTINGS_KEYBOARD_LAYOUT:
+      if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
+        break;
+      }
+      keyboard_layout_menu();
+      did_change = 1;
+      break;
+    case SETTINGS_ABSOLUTE_MOUSE:
+      if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
+        break;
+      }
+      did_change = 1;
+      config.absolute_mouse = !config.absolute_mouse;
+      touchabsolute_enable(config.absolute_mouse);
       break;
 
   }
@@ -829,6 +864,9 @@ static int settings_loop(int id, void *context, const input_data *input) {
 
   sprintf(current, "%d", config.mouse_acceleration);
   MENU_REPLACE(SETTINGS_VIEW_MOUSE_ACCEL, current);
+
+  sprintf(current, "%s", touchabsolute_is_enabled() ? "sí" : "no");
+  MENU_REPLACE(SETTINGS_VIEW_ABSOLUTE_MOUSE, current);
   return 0;
 }
 
@@ -836,6 +874,88 @@ static int settings_back(void *context) {
   ui_settings_save_config();
   update_layout();
   return 0;
+}
+
+// --- OPCIÓN DE LAYOUT DE TECLADO EN UI SETTINGS ---
+#include "../input/keyboardkeys.h"
+#include "ui_keyboard.h"
+
+// --- HOTKEYS MENU (UI) ---
+#include "ui_hotkey.h"
+// Declaraciones para evitar warnings y errores de compilación
+extern void hotkey_func_name(int idx, char* out, int outlen);
+extern void hotkey_buttons_name(const hotkey_t* hk, char* out, int outlen);
+extern int add_hotkey_menu();
+int hotkeys_menu() {
+    extern hotkey_t g_hotkeys[];
+    extern int g_hotkey_count;
+    char funcname[128], btns[128];
+    menu_entry menu[HOTKEY_MENU_MAX+8] = {0};
+    int idx = 0;
+    // Resumen decorativo
+    if (g_hotkey_count == 0) {
+        menu[idx].name = "-----------------------------";
+        menu[idx].disabled = true;
+        idx++;
+        menu[idx].name = "No hay atajos, añade uno";
+        menu[idx].disabled = true;
+        idx++;
+        menu[idx].name = "-----------------------------";
+        menu[idx].disabled = true;
+        idx++;
+    } else {
+        menu[idx].name = "-----------------------------";
+        menu[idx].disabled = true;
+        idx++;
+        for (int i = 0; i < g_hotkey_count; ++i) {
+            hotkey_func_name(g_hotkeys[i].function, funcname, sizeof(funcname));
+            hotkey_buttons_name(&g_hotkeys[i], btns, sizeof(btns));
+            static char resumen_lineas[HOTKEY_MENU_MAX][512];
+            snprintf(resumen_lineas[i], sizeof(resumen_lineas[i]), "%s = %s", btns, funcname);
+            menu[idx].name = resumen_lineas[i];
+            menu[idx].disabled = true;
+            idx++;
+        }
+        menu[idx].name = "-----------------------------";
+        menu[idx].disabled = true;
+        idx++;
+    }
+    // Opciones principales
+    menu[idx++] = (menu_entry){ .name = "Agregar nuevo atajo", .id = 100 };
+    if (g_hotkey_count > 0) {
+        menu[idx++] = (menu_entry){ .name = "Eliminar atajo", .id = 200 };
+    }
+    menu[idx++] = (menu_entry){ .name = "Volver", .id = -1 };
+
+    int sel = display_menu(menu, idx, NULL, NULL, NULL, NULL, NULL);
+    int selected_id = menu[sel].id;
+    if (selected_id == 100) {
+        add_hotkey_menu();
+    } else if (selected_id == 200) {
+        // Eliminar: muestra lista de atajos para elegir cuál borrar
+        menu_entry del_menu[HOTKEY_MENU_MAX+1] = {0};
+        int didx = 0;
+        for (int i = 0; i < g_hotkey_count; ++i) {
+            hotkey_func_name(g_hotkeys[i].function, funcname, sizeof(funcname));
+            hotkey_buttons_name(&g_hotkeys[i], btns, sizeof(btns));
+            char nombre[512];
+            snprintf(nombre, sizeof(nombre), "%s = %s", btns, funcname);
+            del_menu[didx].name = strdup(nombre);
+            del_menu[didx].id = i;
+            ++didx;
+        }
+        del_menu[didx++] = (menu_entry){ .name = "Cancelar", .id = -1 };
+        int which = display_menu(del_menu, didx, NULL, NULL, NULL, NULL, NULL);
+        if (which >= 0 && which < g_hotkey_count) {
+            for (int i = which; i < g_hotkey_count-1; ++i) g_hotkeys[i] = g_hotkeys[i+1];
+            g_hotkey_count--;
+        }
+        for (int i = 0; i < didx-1; ++i) free(del_menu[i].name);
+    } else if (selected_id == -1) {
+        // Volver
+        return 0;
+    }
+    return 0;
 }
 
 int ui_settings_menu() {
@@ -865,7 +985,9 @@ int ui_settings_menu() {
   MENU_ENTRY(SETTINGS_SOPS, SETTINGS_VIEW_SOPS, "Change graphical game settings for performance", "");
   MENU_ENTRY(SETTINGS_ENABLE_FRAME_INVAL, SETTINGS_VIEW_ENABLE_FRAME_INVAL, "Enable reference frame invalidation", "");
   MENU_ENTRY(SETTINGS_ENABLE_STREAM_OPTIMIZE, SETTINGS_VIEW_ENABLE_STREAM_OPTIMIZE, "Enable stream optimization", "");
-  MENU_ENTRY(SETTINGS_ENABLE_VITA_VBLANK_WAIT, SETTINGS_VIEW_ENABLE_VITA_VBLANK_WAIT, "Enable VITA vblank", "");
+  MENU_ENTRY(SETTINGS_ENABLE_VITA_VBLANK_WAIT, SETTINGS_ENABLE_VITA_VBLANK_WAIT, "Enable VITA vblank", "");
+
+
   MENU_ENTRY(SETTINGS_ENABLE_FRAME_PACER, SETTINGS_VIEW_ENABLE_FRAME_PACER, "Enable frame pacer", "");
   MENU_ENTRY(SETTINGS_LOCAL_AUDIO, SETTINGS_VIEW_LOCAL_AUDIO, "Enable local audio", "");
 
@@ -886,10 +1008,15 @@ int ui_settings_menu() {
   MENU_MESSAGE("Example in github repo.");
   MENU_ENTRY(SETTINGS_BACK_DEADZONE, SETTINGS_VIEW_BACK_DEADZONE, "Back touchscreen deadzone", "");
   MENU_ENTRY(SETTINGS_SPECIAL_KEYS, SETTINGS_VIEW_SPECIAL_KEYS, "Touchscreen special keys", "");
+  MENU_ENTRY(SETTINGS_HOTKEYS, SETTINGS_VIEW_HOTKEYS, "Configurar hotkeys", "");
+  MENU_ENTRY(SETTINGS_ABSOLUTE_MOUSE, SETTINGS_VIEW_ABSOLUTE_MOUSE, "Mouse absoluto (touch)", ICON_LEFT_RIGHT_ARROWS);
+  MENU_CATEGORY("Teclado");
+  MENU_ENTRY(SETTINGS_KEYBOARD_LAYOUT, SETTINGS_VIEW_KEYBOARD_LAYOUT, "Distribución de teclado", ICON_LEFT_RIGHT_ARROWS);
 
   settings_loop_setup = 1;
   assert(idx < 48);
-  return display_menu(menu, idx, NULL, &settings_loop, &settings_back, NULL, &menu);
+  int ret = display_menu(menu, idx, NULL, &settings_loop, &settings_back, NULL, &menu);
+  return ret;
 }
 
 void ui_settings_save_config() {

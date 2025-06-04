@@ -35,6 +35,8 @@
 #include "psp2common/types.h"
 #include "vita.h"
 #include "mapping.h"
+#include "../keyboardsystem.h"
+#include "touchabsolute.h"
 
 #include <Limelight.h>
 
@@ -320,6 +322,10 @@ inline void special(uint32_t defined, uint32_t pressed, uint32_t old_pressed) {
           connection_minimize();
           return;
         }
+        if (dev_val == INPUT_SPECIAL_KEY_KEYBOARD) {
+          keyboardsystem_open_keyboard();
+          return;
+        }
         return;
       case INPUT_TYPE_GAMEPAD:
         curr.button |= dev_val;
@@ -461,6 +467,17 @@ inline void check_for_double_click(input_data *curr) {
 }
 
 
+// Callback para enviar eventos de mouse absoluto
+static void send_absolute_mouse_event(int x, int y, bool down) {
+    if (down) {
+        // Usar las dimensiones de referencia de la pantalla Vita
+        LiSendMousePositionEvent(x, y, 960, 544);
+        LiSendMouseButtonEvent(BUTTON_ACTION_PRESS, BUTTON_LEFT);
+    } else {
+        LiSendMouseButtonEvent(BUTTON_ACTION_RELEASE, BUTTON_LEFT);
+    }
+}
+
 inline void vitainput_process(void) {
   memset(&pad, 0, sizeof(pad));
   memset(&touch, 0, sizeof(TouchData));
@@ -474,6 +491,14 @@ inline void vitainput_process(void) {
   read_backscreen();
 
   sceRtcGetCurrentTick(&current);
+
+  // Si el mouse absoluto está activado, procesar y salir
+  if (touchabsolute_is_enabled()) {
+    touchabsolute_process(send_absolute_mouse_event);
+    // Actualizar old para evitar repeticiones innecesarias
+    memcpy(&touch_old, &touch, sizeof(TouchData));
+    return;
+  }
 
   // buttons
   curr.button |= is_pressed(map.btn_dpad_up)    ? UP_FLAG     : 0;
@@ -723,4 +748,10 @@ void vitainput_start(void) {
 void vitainput_stop(void) {
   active_input_thread = false;
   active_motion_threads = false;
+}
+
+void open_keyboard(void) {
+    // Abre el teclado IME sin texto inicial, solo para cerrar/enter
+    char dummy[2] = "";
+    ime_dialog_string(dummy, "", "");
 }

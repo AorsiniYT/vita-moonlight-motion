@@ -1,0 +1,56 @@
+void vitainput_kb_init_names()
+{
+    for (int i = 0; i < 256; ++i) kbNames[i] = 0;
+    kbNames[KEY_A] = 'a';
+    kbNames[KEY_B] = 'b';
+    kbNames[KEY_C] = 'c';
+    kbNames[KEY_D] = 'd';
+    kbNames[KEY_E] = 'e';
+    kbNames[KEY_F] = 'f';
+    kbNames[KEY_G] = 'g';
+    kbNames[KEY_H] = 'h';
+    kbNames[KEY_I] = 'i';
+    kbNames[KEY_J] = 'j';
+    kbNames[KEY_K] = 'k';
+    kbNames[KEY_L] = 'l';
+    kbNames[KEY_M] = 'm';
+    kbNames[KEY_N] = 'n';
+    kbNames[KEY_O] = 'o';
+    kbNames[KEY_P] = 'p';
+    kbNames[KEY_Q] = 'q';
+    kbNames[KEY_R] = 'r';
+    kbNames[KEY_S] = 's';
+    kbNames[KEY_T] = 't';
+    kbNames[KEY_U] = 'u';
+    kbNames[KEY_V] = 'v';
+    kbNames[KEY_W] = 'w';
+    kbNames[KEY_X] = 'x';
+    kbNames[KEY_Y] = 'y';
+    kbNames[KEY_Z] = 'z';
+    kbNames[KEY_1] = '1';
+    kbNames[KEY_2] = '2';
+    kbNames[KEY_3] = '3';
+    kbNames[KEY_4] = '4';
+    kbNames[KEY_5] = '5';
+    kbNames[KEY_6] = '6';
+    kbNames[KEY_7] = '7';
+    kbNames[KEY_8] = '8';
+    kbNames[KEY_9] = '9';
+    kbNames[KEY_0] = '0';
+    kbNames[KEY_ENTER] = '\n';
+    kbNames[KEY_BACKSPACE] = '\b';
+    kbNames[KEY_TAB] = '\t';
+    kbNames[KEY_SPACE] = ' ';
+    kbNames[KEY_MINUS] = '-';
+    kbNames[KEY_EQUAL] = '=';
+    kbNames[KEY_LEFTBRACE] = '[';
+    kbNames[KEY_RIGHTBRACE] = ']';
+    kbNames[KEY_BACKSLASH] = '\\';
+    kbNames[KEY_SEMICOLON] = ';';
+    kbNames[KEY_APOSTROPHE] = '\'';
+    kbNames[KEY_GRAVE] = '`';
+    kbNames[KEY_COMMA] = ',';
+    kbNames[KEY_DOT] = '.';
+    kbNames[KEY_SLASH] = '/';
+    // Puedes agregar más según lo necesites
+}

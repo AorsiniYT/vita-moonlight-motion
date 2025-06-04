@@ -24,6 +24,7 @@
 #include <psp2/kernel/sysmem.h>
 #include <psp2/kernel/threadmgr.h>
 #include <psp2/motion.h>
+#include "../keyboardsystem.h"
 
 #include <psp2/ctrl.h>
 #include <psp2/touch.h>
@@ -87,7 +88,8 @@ typedef struct double_click_tracker {
 #define INPUT_TYPE_DEF_NAME     0xf0000000
 
 enum {
-  INPUT_SPECIAL_KEY_PAUSE
+  INPUT_SPECIAL_KEY_PAUSE,
+  INPUT_SPECIAL_KEY_KEYBOARD
 };
 
 typedef struct Point {
@@ -123,3 +125,4 @@ void move_mouse(TouchData old, TouchData cur);
 bool mouse_click(short finger_count, bool press);
 void move_motion(SceMotionState motionState);
 void move_wheel(TouchData old, TouchData cur);
+// void open_keyboard(void); // Ahora se usa keyboardsystem_open_keyboard()

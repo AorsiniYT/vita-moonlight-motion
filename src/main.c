@@ -26,6 +26,8 @@
 #include "platform.h"
 
 #include "input/vita.h"
+#include "input/keyboardkeys.h"
+#include "keyboardsystem.h"
 
 #include <Limelight.h>
 
@@ -151,6 +153,9 @@ int main(int argc, char* argv[]) {
   config_path = "ux0:data/moonlight/moonlight.conf";
   config_parse(argc, argv, &config);
   strcpy(config.key_dir, "ux0:data/moonlight/");
+
+  // Aplicar el layout guardado después de cargar la config
+  keyboardsystem_set_layout((KeyboardLayout)config.keyboard_layout);
 
   vitapower_config(config);
   vitainput_config(config);

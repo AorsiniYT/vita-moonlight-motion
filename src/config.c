@@ -131,6 +131,10 @@ static int ini_handle(void *out, const char *section, const char *name,
       config->motion_controls_scalar_x = FLT(value);
     } else if (strcmp(name, "motion_controls_scalar_y") == 0) {
       config->motion_controls_scalar_y = FLT(value);
+    } else if (strcmp(name, "keyboard_layout") == 0) {
+      config->keyboard_layout = INT(value);
+    } else if (strcmp(name, "absolute_mouse") == 0) {
+      config->absolute_mouse = BOOL(value);
     }
   }
   return 0;
@@ -202,6 +206,10 @@ void config_save(const char* filename, PCONFIGURATION config) {
   write_config_hex(fd, "se",      config->special_keys.se);
   write_config_int(fd, "offset",  config->special_keys.offset);
   write_config_int(fd, "size",    config->special_keys.size);
+
+  write_config_int(fd, "keyboard_layout", config->keyboard_layout);
+
+  write_config_bool(fd, "absolute_mouse", config->absolute_mouse);
 
   fclose(fd);
 }
