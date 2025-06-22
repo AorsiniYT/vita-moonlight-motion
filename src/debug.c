@@ -22,6 +22,7 @@
 #include <stdarg.h>
 #include <psp2/rtc.h>
 #include <stdlib.h>
+#include <psp2/kernel/clib.h>
 
 #include "debug.h"
 #include "config.h"
@@ -36,6 +37,14 @@ bool vita_debug_init() {
 }
 
 void vita_debug_log(const char *s, ...) {
+#ifdef __vita__
+  va_list va;
+  va_start(va, s);
+  sceClibPrintf("[VITA_DEBUG] ");
+  sceClibVprintf(s, va);
+  sceClibPrintf("\n");
+  va_end(va);
+#else
   if (!config.save_debug_log) {
     return;
   }
@@ -69,5 +78,6 @@ void vita_debug_log(const char *s, ...) {
   free(buffer);
 
   pthread_mutex_unlock(&print_mutex);
+#endif
 }
 
