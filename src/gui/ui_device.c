@@ -9,8 +9,10 @@
 #include "../debug.h"
 #include "../input/vita.h"
 #include "ui_connect.h"
+
 #include "udp_sniffer_vita.h"
 #include "mdns_log.h"
+
 
 #include <assert.h>
 #include <stdarg.h>

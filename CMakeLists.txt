@@ -111,7 +111,6 @@ target_link_libraries(${PROJECT_NAME}.elf
 	-lSceCtrl_stub
 	-lSceTouch_stub
 	-lSceNet_stub
-	-lSceSysmodule_stub
 	-lSceNetCtl_stub
 	-lScePower_stub
 	-lSceVideodec_stub
