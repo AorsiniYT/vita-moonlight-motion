@@ -1,3 +1,13 @@
+## 0.11.2
+
+* More reliable and user-friendly automatic pairing.
+* Experimental absolute touch controls (beta).
+* Floating virtual keyboard that no longer covers the main screen.
+* Updated libraries and dependencies for improved compatibility and stability.
+* New modular UDP mDNS sniffer for device discovery (replaces legacy mdns code).
+* Improved debug logging, especially for device search and reconnect flows.
+* Cleanup of legacy code and dependencies.
+
 ## 0.11.0
 
 * The hold L to activate gyro feature has been removed and replaced with gyro reporting.

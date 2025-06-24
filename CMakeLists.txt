@@ -13,6 +13,11 @@ add_compile_options(-g3 -Wall -Wextra -Wno-unused-parameter -Wno-pointer-sign -W
 project(moonlight)
 
 include("$ENV{VITASDK}/share/vita.cmake" REQUIRED)
+# NOTE: To update the version shown in the UI and VPK, edit the following lines:
+#   set(VERSION_MAJOR "0")
+#   set(VERSION_MINOR "11")
+#   set(VERSION_PATCH "2")
+#
 
 set(TITLE_ID "XYZZ00002")
 set(TITLE "Moonlight")
@@ -155,3 +160,5 @@ add_dependencies(${PROJECT_NAME}.velf ${PROJECT_NAME}.elf)
 add_dependencies(${PROJECT_NAME}.vpk ${PROJECT_NAME}.velf param.sfo)
 
 add_subdirectory(third_party)
+
+
