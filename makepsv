@@ -11,7 +11,7 @@ if [ -z "$title_id" ]; then
 fi
 
 # Configuración
-VITA_IP="192.168.0.200"  # Cambia esto por la IP de tu PS Vita
+VITA_IP="192.168.0.198"  # Cambia esto por la IP de tu PS Vita
 VITA_PORT=1337
 VITA_CONTROL_PORT=1338
 VPK_PATH="build/moonlight.vpk"
@@ -21,7 +21,15 @@ echo "[+] Iniciando compilación para PS Vita..."
 mkdir -p build
 cd build
 cmake ..
+if [ $? -ne 0 ]; then
+    echo "[!] Error en cmake. Abortando."
+    exit 1
+fi
 make -j$(nproc)
+if [ $? -ne 0 ]; then
+    echo "[!] Error en la compilación. Abortando."
+    exit 1
+fi
 cd ..
 
 # Verificar si se generó el VPK
