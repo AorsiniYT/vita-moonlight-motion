@@ -1,13 +1,26 @@
 # Vita Moonlight Motion
 
+**Version 0.11.4**
+
 This project is a PlayStation Vita port of Moonlight, with major improvements and updates.
 
-## What's New
+## What's New in 0.11.4
 
-- **Automatic pairing fixed:** The pairing process is now more reliable and user-friendly.
-- **Absolute Touch (beta):** Experimental support for absolute touch controls.
-- **Floating keyboard:** The virtual keyboard now appears elevated, without covering the main screen.
-- **Updated libraries:** All dependencies and libraries have been updated for better compatibility and stability.
+- Host status indicator dots: green (online), yellow (IP change pending), red (offline/disconnected).
+- Robust host status checking with background scan thread and mDNS sniffer.
+- Manual refresh of host status with TRIANGLE (△) in main menu and device search.
+- IP change confirmation dialog now always shows old and new IP, and always asks for confirmation.
+- Host status and menu only refresh when status actually changes or user requests it.
+- Improved debug logging for all host and menu transitions.
+- UI and logic are now robust even if host fields are empty or uninitialized.
+- All UI messages for search device and refresh are now in English.
+- Added screenshots to documentation (see docs/):
+  - keyboard.png: Floating keyboard in a Steam app using Moonlight.
+  - ip1.png: Host waiting for IP update (yellow).
+  - ip2.png: Host online (green).
+  - ip3.png: Host offline/disconnected (red).
+  - ip4.png: IP change confirmation dialog (shows old/new IP).
+  - ip5.png: Search device function showing a found local device.
 
 ---
 
@@ -59,11 +72,14 @@ If you prefer to build manually:
 
 ## Assets
 
-- Icon: [moonlight-stream][moonlight] project logo
-- Livearea background: [Moonlight Reflection][reflection] (Public domain)
+Screenshots and documentation are available in the `docs/` folder.
 
-[moonlight]: https://github.com/moonlight-stream
-[reflection]: http://www.publicdomainpictures.net/view-image.php?image=130014&picture=moonlight-reflection
+- `keyboard.png`: Floating keyboard in a Steam app using Moonlight.
+- `ip1.png`: Host waiting for IP update (yellow).
+- `ip2.png`: Host online (green).
+- `ip3.png`: Host offline/disconnected (red).
+- `ip4.png`: IP change confirmation dialog (shows old/new IP).
+- `ip5.png`: Search device function showing a found local device.
 
 ---
 
@@ -72,6 +88,18 @@ If you prefer to build manually:
 1. Fork this repository
 2. Write code
 3. Send Pull Requests
+
+---
+
+## Note about colors in vita2d
+
+> **Important:** The vita2d library interprets colors in BGRA format (not RGBA). For example:
+> - 0xFF00FFFF will appear **yellow** (not cyan)
+> - 0xFFFFFF00 will appear **blue** (not yellow)
+> - 0xFF00FF00 will appear **green** (correct)
+> - 0xFFFF0000 will appear **red** (correct)
+>
+> If the color does not look as expected, swap the byte order (use BGR instead of RGB).
 
 ---
 

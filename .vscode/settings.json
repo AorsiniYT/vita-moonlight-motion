@@ -4,6 +4,9 @@
         "resources/xml/activity/main.xml": "xml",
         "netctl.h": "c",
         "debugscreen.h": "c",
-        "udp_sniffer_vita.h": "c"
+        "udp_sniffer_vita.h": "c",
+        "chrono": "cpp",
+        "typeindex": "cpp",
+        "typeinfo": "cpp"
     }
 }

@@ -240,7 +240,7 @@ int ui_search_device_loop() {
   } while(0)
 
   // Mostrar mensaje de refresco con triángulo
-  MENU_MESSAGE("Presiona TRIÁNGULO para refrescar la búsqueda");
+  MENU_MESSAGE("Press TRIANGLE to refresh the search");
 
   MENU_CATEGORY("Search device ...");
   for (int i = 0; i < found_device; i++) {

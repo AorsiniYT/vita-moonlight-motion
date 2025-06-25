@@ -1,3 +1,33 @@
+=head1 VERSION
+
+Moonlight Vita version 0.11.4
+
+=head1 SCREENSHOTS
+
+Screenshots of the new UI and features are available in the docs/ folder:
+
+=over 4
+
+=item * keyboard.png
+Floating keyboard in a Steam app using Moonlight.
+
+=item * ip1.png
+Host waiting for IP update (yellow).
+
+=item * ip2.png
+Host online (green).
+
+=item * ip3.png
+Host offline/disconnected (red).
+
+=item * ip4.png
+IP change confirmation dialog (shows old/new IP).
+
+=item * ip5.png
+Search device function showing a found local device.
+
+=back
+
 =head1 NAME
 
 Moonlight Embedded - Open source implementation of NVIDIA's GameStream

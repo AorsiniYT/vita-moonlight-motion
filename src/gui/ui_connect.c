@@ -88,11 +88,22 @@ void ui_connect_stream(int appId) {
     video_callback->capabilities &= ~CAPABILITY_REFERENCE_FRAME_INVALIDATION_AVC;
   }
 
+  // --- Ajuste para soporte Host Resolution: no modificar resolución si es -1 ---
+  // Eliminados g_requested_width y g_requested_height, lógica simplificada
+  int orig_width = config.stream.width;
+  int orig_height = config.stream.height;
+  // Si se seleccionó una resolución específica, se mantiene; si es -1, se deja al host
+  // (No se modifica config.stream.width/height aquí)
+
   vita_debug_log("Running LiStartConnection...");
   ret = LiStartConnection(&server.serverInfo, &config.stream, &connection_callbacks,
                           video_callback, platform_get_audio(system),
                           NULL, drFlags, NULL, 0);
   vita_debug_log("Connection started.");
+
+  // Restaurar resolución real para el framebuffer/render
+  config.stream.width = orig_width;
+  config.stream.height = orig_height;
 
   if (ret == 0) {
     server.currentGame = appId;
