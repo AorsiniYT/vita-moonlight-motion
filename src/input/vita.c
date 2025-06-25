@@ -516,6 +516,11 @@ inline void vitainput_process(void) {
   curr.button |= is_pressed(map.btn_tl2)        ? LS_CLK_FLAG : 0; // l3
   curr.button |= is_pressed(map.btn_tr2)        ? RS_CLK_FLAG : 0; // r3
 
+  // Atajo: Start + L + R para pausar/desplegar menú de pausa
+  if ((pad.buttons & SCE_CTRL_START) && (pad.buttons & SCE_CTRL_L1) && (pad.buttons & SCE_CTRL_R1)) {
+    connection_minimize();
+  }
+
   // analogs
   curr.lt = read_analog(map.btn_tl); // l2
   curr.rt = read_analog(map.btn_tr); // r2
