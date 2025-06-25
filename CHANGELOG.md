@@ -1,3 +1,21 @@
+## 0.11.4
+
+* Host status indicator dots: green (online), yellow (IP change pending), red (offline/disconnected).
+* Robust host status checking with background scan thread and mDNS sniffer.
+* Manual refresh of host status with TRIANGLE (△) in main menu and device search.
+* IP change confirmation dialog now always shows old and new IP, and always asks for confirmation.
+* Host status and menu only refresh when status actually changes or user requests it.
+* Improved debug logging for all host and menu transitions.
+* UI and logic are now robust even if host fields are empty or uninitialized.
+* All UI messages for search device and refresh are now in English.
+* Added screenshots to documentation (see docs/):
+  * keyboard.png: Floating keyboard in a Steam app using Moonlight.
+  * ip1.png: Host waiting for IP update (yellow).
+  * ip2.png: Host online (green).
+  * ip3.png: Host offline/disconnected (red).
+  * ip4.png: IP change confirmation dialog (shows old/new IP).
+  * ip5.png: Search device function showing a found local device.
+
 ## 0.11.2
 
 * More reliable and user-friendly automatic pairing.

@@ -19,6 +19,7 @@ typedef struct menu_entry {
   char *name, *suffix;
   char subname[1024];
   bool disabled, separator;
+  bool is_host_entry; // Nuevo: solo true para hosts emparejados
 } menu_entry;
 
 typedef struct menu_geom {
@@ -67,3 +68,6 @@ void display_error(char *format, ...);
 void flash_message(char *format, ...);
 
 void guilib_init(gui_loop_callback global_loop_cb, gui_draw_callback global_draw_cb);
+
+// Declaración de display_confirm para uso global
+int display_confirm(const char* message);

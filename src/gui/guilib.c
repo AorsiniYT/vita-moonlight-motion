@@ -1,4 +1,5 @@
 #include "guilib.h"
+#include "../gui/mdns_log.h"
 
 #include "../config.h"
 #include "../platform.h"
@@ -149,20 +150,18 @@ void draw_menu(menu_entry menu[], int total_elements, menu_geom geom, int cursor
   draw_statusbar(geom);
 
   for (int i = 0, cursor_idx = 0; i < total_elements; i++) {
-    long color = 0xffffffff;
+    long text_color = 0xffffffff;
     if (cursor == cursor_idx) {
-      color = 0xff00ff00;
+      text_color = 0xff00ff00; // Verde para seleccionado
     }
-
     if (!menu[i].disabled) {
       cursor_idx++;
     } else {
-      color = 0xffaaaaaa;
+      text_color = 0xffaaaaaa;
     }
 
-    if (menu[i].color) {
-      color = menu[i].color;
-    }
+    // Color del puntito de estado (solo para hosts, si menu[i].color != 0)
+    unsigned int dot_color = menu[i].color ? menu[i].color : 0xffaaaaaa;
 
     int el_x = geom.x + 10,
         el_y = geom.y + i * geom.el - offset + 10;
@@ -185,12 +184,28 @@ void draw_menu(menu_entry menu[], int total_elements, menu_geom geom, int cursor
           );
     }
 
-    if (menu[i].name) {
+    // Dibuja el puntito de estado solo para hosts emparejados (solo menú principal)
+    if (menu[i].is_host_entry && menu[i].name && strlen(menu[i].name) > 0) {
+      int dot_radius = 8;
+      int dot_x = el_x + dot_radius; // Asegura que el puntito no quede pegado al borde
+      int dot_y = el_y + text_height / 2 + 2;
+      unsigned int visible_dot_color = (dot_color & 0x00FFFFFF) | 0xFF000000;
+      vita2d_draw_fill_circle(dot_x, dot_y, dot_radius + 2, 0xFF000000);
+      vita2d_draw_fill_circle(dot_x, dot_y, dot_radius, visible_dot_color);
+      vita2d_font_draw_text(
+          font,
+          dot_x + dot_radius + 6, // Más espacio a la derecha del puntito
+          el_y + text_height,
+          text_color,
+          18,
+          menu[i].name
+          );
+    } else if (menu[i].name && strlen(menu[i].name) > 0) {
       vita2d_font_draw_text(
           font,
           el_x + 2,
           el_y + text_height,
-          color,
+          text_color,
           18,
           menu[i].name
           );
@@ -203,21 +218,20 @@ void draw_menu(menu_entry menu[], int total_elements, menu_geom geom, int cursor
           font,
           el_x + geom.width - text_width - right_x_offset,
           el_y + text_height,
-          color,
+          text_color,
           18,
           menu[i].suffix
           );
 
       right_x_offset += text_width + 10;
     }
-
     if (*menu[i].subname) {
       int text_width = vita2d_font_text_width(font, 18, menu[i].subname);
       vita2d_font_draw_text(
           font,
           el_x + geom.width - text_width - right_x_offset,
           el_y + text_height,
-          color,
+          text_color,
           18,
           menu[i].subname
           );
@@ -506,4 +520,24 @@ void guilib_init(gui_loop_callback global_loop_cb, gui_draw_callback global_draw
 
   gui_global_draw_callback = global_draw_cb;
   gui_global_loop_callback = global_loop_cb;
+}
+
+int display_confirm(const char* message) {
+    char* buttons[] = {"X: Yes", "O: No"};
+    menu_geom geom = make_geom_centered(400, 200);
+    while (1) {
+        ui_start();
+        draw_alert((char*)message, geom, buttons, 2);
+        input_data input = {0};
+        input.buttons = read_buttons();
+        sceTouchPeek(SCE_TOUCH_PORT_FRONT, &input.touch, 1);
+        if (input.buttons & config.btn_confirm) {
+            ui_end();
+            return 1; // X
+        } else if (input.buttons & config.btn_cancel) {
+            ui_end();
+            return 0; // O
+        }
+        ui_end();
+    }
 }

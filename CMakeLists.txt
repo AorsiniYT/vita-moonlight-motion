@@ -23,7 +23,7 @@ set(TITLE_ID "XYZZ00002")
 set(TITLE "Moonlight")
 set(VERSION_MAJOR "0")
 set(VERSION_MINOR "11")
-set(VERSION_PATCH "2")
+set(VERSION_PATCH "4")
 
 execute_process(COMMAND
 	python -c "print('%02d.%02d' % (${VERSION_MAJOR}, ${VERSION_MINOR}))"
@@ -77,6 +77,7 @@ add_executable(${PROJECT_NAME}.elf
 	src/gui/ui_device.c
 	src/gui/ui_hotkey.c
 	src/gui/hotkey.c
+	src/gui/ui_check.c
 
 	libgamestream/client.c
 	libgamestream/http.c
@@ -89,6 +90,7 @@ add_executable(${PROJECT_NAME}.elf
 	src/input/keyboardkeys.c
 	src/gui/ui_keyboard.c
 	src/input/touchabsolute.c
+	src/check_host.c
 )
 
 # Forzar el enlace de mbedtls, mbedx509 y mbedcrypto para VitaSDK personalizado
