@@ -1,14 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <changeinfo>
+<changes app_ver="00.12"><![CDATA[
+## 0.12.0<br>
+* Add support for multi-touch touchscreen mode (Sunshine compatible) and absolute mouse mode.<br>
+* New settings: choose between "Touch Mouse Absolute" (gestures, mouse) and "Touchscreen (Sunshine multitouch)" (tablet mode).<br>
+* In touchscreen mode: true multitouch, native gestures (e.g. zoom), no mouse cursor/ghost, no mouse clicks.<br>
+* In absolute mouse mode: improved gestures (right click with two-finger tap, scroll with two fingers), cursor always follows main finger.<br>
+* Physical controls (gamepad) work in both modes.<br>
+* Improved logic for right click and scroll gestures.<br>
+* Many bugfixes and refinements to touch and gesture experience.<br>
+]]></changes>
 <changes app_ver="00.11"><![CDATA[
-## 0.11.2<br>
-* More reliable and user-friendly automatic pairing.<br>
-* Experimental absolute touch controls (beta).<br>
-* Floating virtual keyboard that no longer covers the main screen.<br>
-* Updated libraries and dependencies for improved compatibility and stability.<br>
-* New modular UDP mDNS sniffer for device discovery (replaces legacy mdns code).<br>
-* Improved debug logging, especially for device search and reconnect flows.<br>
-* Cleanup of legacy code and dependencies.<br>
+## 0.11.4<br>
+* Host status indicator dots: green (online), yellow (IP change pending), red (offline/disconnected).<br>
+* Robust host status checking with background scan thread and mDNS sniffer.<br>
+* Manual refresh of host status with TRIANGLE (△) in main menu and device search.<br>
+* IP change confirmation dialog now always shows old and new IP, and always asks for confirmation.<br>
+* Host status and menu only refresh when status actually changes or user requests it.<br>
+* Improved debug logging for all host and menu transitions.<br>
+* UI and logic are now robust even if host fields are empty or uninitialized.<br>
+* All UI messages for search device and refresh are now in English.<br>
+* Added screenshots to documentation (see docs/):<br>
+  * keyboard.png: Floating keyboard in a Steam app using Moonlight.<br>
+  * ip1.png: Host waiting for IP update (yellow).<br>
+  * ip2.png: Host online (green).<br>
+  * ip3.png: Host offline/disconnected (red).<br>
+  * ip4.png: IP change confirmation dialog (shows old/new IP).<br>
+  * ip5.png: Search device function showing a found local device.<br>
 ]]></changes>
 <changes app_ver="00.10"><![CDATA[
 ## 0.10.1<br>

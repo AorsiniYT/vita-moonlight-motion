@@ -1,22 +1,27 @@
 # Vita Moonlight Motion
 
-Vita Moonlight Motion is a PlayStation Vita port of Moonlight, with major improvements for usability, pairing, and device management.
+Vita Moonlight Motion is a PlayStation Vita port of Moonlight, with major improvements for usability, pairing, device management, and now advanced touch and multitouch support.
 
 ---
 
 ## What's New
 
+- **Multi-touch touchscreen mode:** New tablet-style mode compatible with Sunshine, with true multitouch support and native gestures (e.g. pinch-to-zoom).
+- **Improved Absolute Mouse mode:** Cursor always follows the main finger, right click with two-finger tap, natural two-finger scrolling.
+- **Exclusive touch mode selection:** Choose between "Touch Mouse Absolute" (mouse gestures) or "Touchscreen (Sunshine multitouch)" (multitouch tablet) in the settings menu.
+- **No ghost cursor:** In touchscreen mode, the host cursor is hidden and no mouse clicks are sent.
+- **Physical controls always active:** Gamepad controls work in both touch modes.
+- **Refined gesture and touch experience:** Improved logic for right click, scrolling, and multitouch gestures.
+- **Host status indicator dots:** Green (online), yellow (IP change pending), red (offline/disconnected).
+- **Robust host status checking:** Background scan thread and mDNS sniffer.
+- **Manual refresh:** Press TRIANGLE (△) in the main menu or device search to refresh host/device status instantly.
+- **IP change confirmation dialog:** Always shows old and new IP, and always asks for confirmation.
+- **UI and logic robust to missing/empty host fields.**
+- **Improved debug logging and error handling.**
 - **Automatic pairing fixed:** The pairing process is now more reliable and user-friendly. You can now pair your PC directly from the Vita using "Search device"—no more manual pairing required!
-- **Absolute Touch (beta):** Experimental support for absolute touch controls.
-- **Motion controls (gyroscope):** Play with motion aiming and gyro support for a more immersive experience.
 - **Elevated floating keyboard:** The virtual keyboard now appears above the app, never covering the main screen (see screenshot below).
 - **Updated libraries:** All dependencies and core libraries (moonlight-common-c, enet, inih) have been updated for better compatibility and stability.
 - **New modular mDNS sniffer:** Fast and reliable device discovery on your local network.
-- **Host status indicators:** Colored dots show if a host is online (green), offline (red), or needs IP update (yellow).
-- **IP change detection:** If a host changes its IP, you'll see a confirmation dialog with the old and new IP before updating.
-- **Manual refresh:** Press TRIANGLE (△) in the main menu or device search to refresh host/device status instantly.
-- **UI and logic robust to missing/empty host fields.**
-- **Improved debug logging and error handling.**
 - **Many bugfixes and code cleanups.**
 
 ---

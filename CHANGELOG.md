@@ -1,3 +1,13 @@
+## 0.12.0
+
+* Add support for multi-touch touchscreen mode (Sunshine compatible) and absolute mouse mode.
+* New settings: choose between "Touch Mouse Absolute" (gestures, mouse) and "Touchscreen (Sunshine multitouch)" (tablet mode).
+* In touchscreen mode: true multitouch, native gestures (e.g. zoom), no mouse cursor/ghost, no mouse clicks.
+* In absolute mouse mode: improved gestures (right click with two-finger tap, scroll with two fingers), cursor always follows main finger.
+* Physical controls (gamepad) work in both modes.
+* Improved logic for right click and scroll gestures.
+* Many bugfixes and refinements to touch and gesture experience.
+
 ## 0.11.4
 
 * Host status indicator dots: green (online), yellow (IP change pending), red (offline/disconnected).
