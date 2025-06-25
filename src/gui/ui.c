@@ -56,6 +56,9 @@ void start_host_scan() {}
 void stop_host_scan() {}
 #endif
 
+// Variable global para controlar el reinicio del escaneo de hosts
+static int host_scan_done = 0;
+
 int ui_main_menu_loop(int cursor, void *context, const input_data *input) {
   menu_entry *menu = (menu_entry*)context;
 #ifdef __vita__
@@ -178,6 +181,7 @@ int ui_main_menu_loop(int cursor, void *context, const input_data *input) {
   if (exit_menu) {
     mdns_log("[UI] Saliendo del menú principal, deteniendo escaneo de hosts");
     stop_host_scan();
+    host_scan_done = 0; // Permitir que el escaneo se reinicie al volver al menú principal
     return exit_menu;
   }
   return 0;
@@ -188,7 +192,6 @@ int ui_main_menu_back(void *context) {
 }
 
 int ui_main_menu() {
-  static int host_scan_done = 0;
   menu_entry menu[16];
   int idx = 0;
 
