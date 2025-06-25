@@ -428,7 +428,8 @@ enum {
   SETTINGS_HOTKEYS,
   SETTINGS_MOUSE_ACCEL,
   SETTINGS_KEYBOARD_LAYOUT,
-  SETTINGS_ABSOLUTE_MOUSE
+  SETTINGS_ABSOLUTE_MOUSE,
+  SETTINGS_TOUCHSCREEN_MODE // Nuevo: opción para modo touchscreen multitouch
 };
 
 enum {
@@ -458,6 +459,7 @@ enum {
   SETTINGS_VIEW_MOUSE_ACCEL,
   SETTINGS_VIEW_KEYBOARD_LAYOUT,
   SETTINGS_VIEW_ABSOLUTE_MOUSE,
+  SETTINGS_VIEW_TOUCHSCREEN_MODE, // Nuevo: vista para modo touchscreen multitouch
 
   SETTINGS_VIEW_MAX_COUNT,
 };
@@ -780,7 +782,17 @@ static int settings_loop(int id, void *context, const input_data *input) {
       }
       did_change = 1;
       config.absolute_mouse = !config.absolute_mouse;
+      if (config.absolute_mouse) config.touchscreen_mode = false; // Exclusividad
       touchabsolute_enable(config.absolute_mouse);
+      break;
+    case SETTINGS_TOUCHSCREEN_MODE:
+      if ((input->buttons & config.btn_confirm) == 0 || input->buttons & SCE_CTRL_HOLD) {
+        break;
+      }
+      did_change = 1;
+      config.touchscreen_mode = !config.touchscreen_mode;
+      if (config.touchscreen_mode) config.absolute_mouse = false; // Exclusividad
+      touchabsolute_enable(false); // Desactiva mouse absoluto si se activa touchscreen
       break;
 
   }
@@ -865,8 +877,10 @@ static int settings_loop(int id, void *context, const input_data *input) {
   sprintf(current, "%d", config.mouse_acceleration);
   MENU_REPLACE(SETTINGS_VIEW_MOUSE_ACCEL, current);
 
-  sprintf(current, "%s", config.absolute_mouse ? "yes" : "no");
+  sprintf(current, "%s", config.absolute_mouse ? "sí" : "no");
   MENU_REPLACE(SETTINGS_VIEW_ABSOLUTE_MOUSE, current);
+  sprintf(current, "%s", config.touchscreen_mode ? "sí" : "no");
+  MENU_REPLACE(SETTINGS_VIEW_TOUCHSCREEN_MODE, current);
   return 0;
 }
 
@@ -1009,7 +1023,8 @@ int ui_settings_menu() {
   MENU_ENTRY(SETTINGS_BACK_DEADZONE, SETTINGS_VIEW_BACK_DEADZONE, "Back touchscreen deadzone", "");
   MENU_ENTRY(SETTINGS_SPECIAL_KEYS, SETTINGS_VIEW_SPECIAL_KEYS, "Touchscreen special keys", "");
   MENU_ENTRY(SETTINGS_HOTKEYS, SETTINGS_VIEW_HOTKEYS, "Configure hotkeys", "");
-  MENU_ENTRY(SETTINGS_ABSOLUTE_MOUSE, SETTINGS_VIEW_ABSOLUTE_MOUSE, "Absolute mouse (touch)", ICON_LEFT_RIGHT_ARROWS);
+  MENU_ENTRY(SETTINGS_ABSOLUTE_MOUSE, SETTINGS_VIEW_ABSOLUTE_MOUSE, "Touch Mouse Absolute (gestos)", ICON_LEFT_RIGHT_ARROWS);
+  MENU_ENTRY(SETTINGS_TOUCHSCREEN_MODE, SETTINGS_VIEW_TOUCHSCREEN_MODE, "Touchscreen (Sunshine multitouch)", ICON_LEFT_RIGHT_ARROWS);
   MENU_CATEGORY("Keyboard");
   MENU_ENTRY(SETTINGS_KEYBOARD_LAYOUT, SETTINGS_VIEW_KEYBOARD_LAYOUT, "Keyboard layout", ICON_LEFT_RIGHT_ARROWS);
 
@@ -1020,7 +1035,7 @@ int ui_settings_menu() {
 }
 
 void ui_settings_save_config() {
-  mdns_log("[DEBUG] Guardando configuración: absolute_mouse = %d\n", config.absolute_mouse);
+  mdns_log("[DEBUG] Guardando configuración: absolute_mouse = %d, touchscreen_mode = %d\n", config.absolute_mouse, config.touchscreen_mode);
   config_save(config_path, &config);
   mdns_log("[DEBUG] Configuración guardada en %s\n", config_path);
 }

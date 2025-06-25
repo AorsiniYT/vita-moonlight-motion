@@ -492,15 +492,7 @@ inline void vitainput_process(void) {
 
   sceRtcGetCurrentTick(&current);
 
-  // Si el mouse absoluto está activado, procesar touch absoluto
-  if (touchabsolute_is_enabled()) {
-    touchabsolute_process(send_absolute_mouse_event);
-    // Actualizar old para evitar repeticiones innecesarias
-    memcpy(&touch_old, &touch, sizeof(TouchData));
-    // NO return; aquí, para que también se procesen los botones y accesos directos
-  }
-
-  // buttons
+  // --- LECTURA DE BOTONES Y STICKS SIEMPRE (antes de los modos táctiles) ---
   curr.button |= is_pressed(map.btn_dpad_up)    ? UP_FLAG     : 0;
   curr.button |= is_pressed(map.btn_dpad_left)  ? LEFT_FLAG   : 0;
   curr.button |= is_pressed(map.btn_dpad_down)  ? DOWN_FLAG   : 0;
@@ -529,80 +521,221 @@ inline void vitainput_process(void) {
   curr.rx = read_analog(map.abs_rx);
   curr.ry = read_analog(map.abs_ry);
 
-  // special touchscreen buttons SOLO si el absolute mouse está desactivado
-  if (!touchabsolute_is_enabled()) {
-    special(config.special_keys.nw,
-            is_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_NW),
-            is_old_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_NW));
-    special(config.special_keys.ne,
-            is_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_NE),
-            is_old_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_NE));
-    special(config.special_keys.sw,
-            is_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SW),
-            is_old_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SW));
-    special(config.special_keys.se,
-            is_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SE),
-            is_old_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SE));
-  }
-
   if (config.enable_double_tap_sprint) {
     check_for_double_click(&curr);
   }
 
-  // mouse
-  switch (front_state) {
-    case NO_TOUCH_ACTION:
+  // --- PROCESAMIENTO DE MODOS TÁCTILES EXCLUSIVOS ---
+  if (config.absolute_mouse) {
+    // Modo Mouse Absoluto + gestos
+    if (touchabsolute_is_enabled()) {
+      // El cursor siempre sigue el primer dedo
       if (touch.finger > 0) {
-        front_state = ON_SCREEN_TOUCH;
-        finger_count = touch.finger;
-        sceRtcTickAddMicroseconds(&until, &current, MOUSE_ACTION_DELAY);
+        int x = touch.points[0].x;
+        int y = touch.points[0].y;
+        LiSendMousePositionEvent(x, y, WIDTH, HEIGHT);
       }
-      break;
-    case ON_SCREEN_TOUCH:
-      if (sceRtcCompareTick(&current, &until) < 0) {
-        if (touch.finger < finger_count) {
-          // TAP
-          if (mouse_click(finger_count, true)) {
-            front_state = SCREEN_TAP;
-            sceRtcTickAddMicroseconds(&until, &current, MOUSE_ACTION_DELAY);
-          } else {
-            front_state = NO_TOUCH_ACTION;
+      // Click izquierdo y derecho según número de dedos
+      static int prev_finger_count = 0;
+      static int left_down = 0;
+      static int right_down = 0;
+      // Click izquierdo: solo con un dedo
+      static int prev_one_finger = 0;
+      if (touch.finger == 1 && !prev_one_finger) {
+        LiSendMouseButtonEvent(BUTTON_ACTION_PRESS, BUTTON_LEFT);
+        prev_one_finger = 1;
+      } else if (touch.finger != 1 && prev_one_finger) {
+        LiSendMouseButtonEvent(BUTTON_ACTION_RELEASE, BUTTON_LEFT);
+        prev_one_finger = 0;
+      }
+      // Scroll y click derecho con dos dedos (exclusivos)
+      static int two_finger_active = 0;
+      static int two_finger_scroll = 0;
+      static int two_finger_start_y = 0;
+      static int two_finger_last_y = 0;
+      static int right_click_sent = 0;
+      const int SCROLL_THRESHOLD = 12; // píxeles mínimos para considerar scroll
+      if (touch.finger == 2) {
+        int avg_y = (touch.points[0].y + touch.points[1].y) / 2;
+        if (!two_finger_active) {
+          two_finger_active = 1;
+          two_finger_scroll = 0;
+          two_finger_start_y = avg_y;
+          two_finger_last_y = avg_y;
+        } else {
+          int delta = avg_y - two_finger_last_y;
+          if (abs(avg_y - two_finger_start_y) > SCROLL_THRESHOLD) {
+            two_finger_scroll = 1;
           }
-        } else if (touch.finger > finger_count) {
-          // finger count changed
+          if (two_finger_scroll && abs(delta) > 0) {
+            LiSendScrollEvent(delta);
+          }
+          two_finger_last_y = avg_y;
+        }
+      } else if (two_finger_active && touch.finger < 2) {
+        // Al soltar los dos dedos
+        if (!two_finger_scroll && !right_click_sent) {
+          // Tap de click derecho
+          vita_debug_log("[ABS_MOUSE] Click derecho: tap dos dedos");
+          LiSendMouseButtonEvent(BUTTON_ACTION_PRESS, BUTTON_RIGHT);
+          LiSendMouseButtonEvent(BUTTON_ACTION_RELEASE, BUTTON_RIGHT);
+          right_click_sent = 1;
+        } else {
+          right_click_sent = 0;
+        }
+        two_finger_active = 0;
+        two_finger_scroll = 0;
+      } else if (touch.finger != 2) {
+        // Reset si no hay dos dedos
+        two_finger_active = 0;
+        two_finger_scroll = 0;
+        right_click_sent = 0;
+      }
+      memcpy(&touch_old, &touch, sizeof(TouchData));
+    }
+    // mouse y gestos solo en modo mouse absoluto
+    switch (front_state) {
+      case NO_TOUCH_ACTION:
+        if (touch.finger > 0) {
+          front_state = ON_SCREEN_TOUCH;
           finger_count = touch.finger;
+          sceRtcTickAddMicroseconds(&until, &current, MOUSE_ACTION_DELAY);
         }
-      } else {
-        front_state = SWIPE_START;
-      }
-      break;
-    case SCREEN_TAP:
-      if (sceRtcCompareTick(&current, &until) >= 0) {
-        mouse_click(finger_count, false);
-        front_state = NO_TOUCH_ACTION;
-      }
-      break;
-    case SWIPE_START:
-      memcpy(&swipe, &touch, sizeof(swipe));
-      front_state = ON_SCREEN_SWIPE;
-      break;
-    case ON_SCREEN_SWIPE:
-      if (touch.finger > 0) {
-        switch (touch.finger) {
-          case 1:
-            move_mouse(swipe, touch);
-            break;
-          case 2:
-            move_wheel(swipe, touch);
-            break;
+        break;
+      case ON_SCREEN_TOUCH:
+        if (sceRtcCompareTick(&current, &until) < 0) {
+          if (touch.finger < finger_count) {
+            // TAP
+            if (mouse_click(finger_count, true)) {
+              front_state = SCREEN_TAP;
+              sceRtcTickAddMicroseconds(&until, &current, MOUSE_ACTION_DELAY);
+            } else {
+              front_state = NO_TOUCH_ACTION;
+            }
+          } else if (touch.finger > finger_count) {
+            // finger count changed
+            finger_count = touch.finger;
+          }
+        } else {
+          front_state = SWIPE_START;
         }
+        break;
+      case SCREEN_TAP:
+        if (sceRtcCompareTick(&current, &until) >= 0) {
+          mouse_click(finger_count, false);
+          front_state = NO_TOUCH_ACTION;
+        }
+        break;
+      case SWIPE_START:
         memcpy(&swipe, &touch, sizeof(swipe));
-      } else {
-        front_state = NO_TOUCH_ACTION;
+        front_state = ON_SCREEN_SWIPE;
+        break;
+      case ON_SCREEN_SWIPE:
+        if (touch.finger > 0) {
+          switch (touch.finger) {
+            case 1:
+              move_mouse(swipe, touch);
+              break;
+            case 2:
+              move_wheel(swipe, touch);
+              break;
+          }
+          memcpy(&swipe, &touch, sizeof(swipe));
+        } else {
+          front_state = NO_TOUCH_ACTION;
+        }
+        break;
+    }
+  } else if (config.touchscreen_mode) {
+    // --- Touchscreen multitouch Sunshine tipo tableta gráfica ---
+    static bool mouse_released = false;
+    if (!mouse_released) {
+      LiSendMouseButtonEvent(BUTTON_ACTION_RELEASE, BUTTON_LEFT);
+      LiSendMouseButtonEvent(BUTTON_ACTION_RELEASE, BUTTON_RIGHT);
+      LiSendMouseButtonEvent(BUTTON_ACTION_RELEASE, BUTTON_MIDDLE);
+      LiSendMousePositionEvent(-1, -1, 960, 544);
+      vita_debug_log("[TOUCHSCREEN] Mouse liberado y fuera de pantalla");
+      mouse_released = true;
+    }
+    static uint8_t prev_finger_active[10] = {0};
+    for (int i = 0; i < 10; ++i) {
+      int x = (i < touch.finger) ? touch.points[i].x : 0;
+      int y = (i < touch.finger) ? touch.points[i].y : 0;
+      float norm_x = (float)x / (float)WIDTH;
+      float norm_y = (float)y / (float)HEIGHT;
+      int is_active = (x != 0 || y != 0);
+      if (is_active && !prev_finger_active[i]) {
+        LiSendTouchEvent(LI_TOUCH_EVENT_DOWN, i, norm_x, norm_y, 1.0f, 0.0f, 0.0f, LI_ROT_UNKNOWN);
+        vita_debug_log("[TOUCHSCREEN] DOWN finger=%d x=%.3f y=%.3f", i, norm_x, norm_y);
+      } else if (is_active && prev_finger_active[i]) {
+        LiSendTouchEvent(LI_TOUCH_EVENT_MOVE, i, norm_x, norm_y, 1.0f, 0.0f, 0.0f, LI_ROT_UNKNOWN);
+        vita_debug_log("[TOUCHSCREEN] MOVE finger=%d x=%.3f y=%.3f", i, norm_x, norm_y);
+      } else if (!is_active && prev_finger_active[i]) {
+        LiSendTouchEvent(LI_TOUCH_EVENT_UP, i, norm_x, norm_y, 0.0f, 0.0f, 0.0f, LI_ROT_UNKNOWN);
+        vita_debug_log("[TOUCHSCREEN] UP finger=%d", i);
       }
-      break;
+      prev_finger_active[i] = is_active;
+    }
+    // NO bloque de mouse ni gestos
+  } else {
+    static bool mouse_released = false;
+    mouse_released = false;
+    // mouse y gestos solo si no está en modo touchscreen
+    switch (front_state) {
+      case NO_TOUCH_ACTION:
+        if (touch.finger > 0) {
+          front_state = ON_SCREEN_TOUCH;
+          finger_count = touch.finger;
+          sceRtcTickAddMicroseconds(&until, &current, MOUSE_ACTION_DELAY);
+        }
+        break;
+      case ON_SCREEN_TOUCH:
+        if (sceRtcCompareTick(&current, &until) < 0) {
+          if (touch.finger < finger_count) {
+            // TAP
+            if (mouse_click(finger_count, true)) {
+              front_state = SCREEN_TAP;
+              sceRtcTickAddMicroseconds(&until, &current, MOUSE_ACTION_DELAY);
+            } else {
+              front_state = NO_TOUCH_ACTION;
+            }
+          } else if (touch.finger > finger_count) {
+            // finger count changed
+            finger_count = touch.finger;
+          }
+        } else {
+          front_state = SWIPE_START;
+        }
+        break;
+      case SCREEN_TAP:
+        if (sceRtcCompareTick(&current, &until) >= 0) {
+          mouse_click(finger_count, false);
+          front_state = NO_TOUCH_ACTION;
+        }
+        break;
+      case SWIPE_START:
+        memcpy(&swipe, &touch, sizeof(swipe));
+        front_state = ON_SCREEN_SWIPE;
+        break;
+      case ON_SCREEN_SWIPE:
+        if (touch.finger > 0) {
+          switch (touch.finger) {
+            case 1:
+              move_mouse(swipe, touch);
+              break;
+            case 2:
+              move_wheel(swipe, touch);
+              break;
+          }
+          memcpy(&swipe, &touch, sizeof(swipe));
+        } else {
+          front_state = NO_TOUCH_ACTION;
+        }
+        break;
+    }
   }
 
+  // --- ENVÍO DE EVENTOS DE GAMEPAD SIEMPRE (en cualquier modo) ---
   if (memcmp(&curr, &old, sizeof(input_data)) != 0) {
     LiSendMultiControllerEvent(0, 1, curr.button, curr.lt, curr.rt, curr.lx, -1 * curr.ly, curr.rx, -1 * curr.ry);
     memcpy(&old, &curr, sizeof(input_data));

@@ -136,6 +136,8 @@ static int ini_handle(void *out, const char *section, const char *name,
       config->keyboard_layout = INT(value);
     } else if (strcmp(name, "absolute_mouse") == 0) {
       config->absolute_mouse = BOOL(value);
+    } else if (strcmp(name, "touchscreen_mode") == 0) {
+      config->touchscreen_mode = BOOL(value);
     }
   }
   return 0;
@@ -194,6 +196,7 @@ void config_save(const char* filename, PCONFIGURATION config) {
   write_config_float(fd, "motion_controls_scalar_y", config->motion_controls_scalar_y);
   write_config_int(fd, "keyboard_layout", config->keyboard_layout);
   write_config_bool(fd, "absolute_mouse", config->absolute_mouse);
+  write_config_bool(fd, "touchscreen_mode", config->touchscreen_mode);
   //write_config_bool(fd, "enable_hdr", config->stream.enableHdr);
 
   write_config_section(fd, "backtouchscreen_deadzone");
@@ -278,7 +281,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   char* config_file = config_path;
   if (config_file) {
     config_file_parse(config_file, config);
-    mdns_log("[DEBUG] Configuración cargada: absolute_mouse = %d, show_fps = %d\n", config->absolute_mouse, config->show_fps);
+    mdns_log("[DEBUG] Configuración cargada: absolute_mouse = %d, touchscreen_mode = %d, show_fps = %d\n", config->absolute_mouse, config->touchscreen_mode, config->show_fps);
   }
 
   update_layout();

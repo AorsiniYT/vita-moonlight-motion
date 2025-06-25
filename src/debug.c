@@ -22,7 +22,7 @@
 #include <stdarg.h>
 #include <psp2/rtc.h>
 #include <stdlib.h>
-
+#include "../src/gui/mdns_log.h"
 #include "debug.h"
 #include "config.h"
 
@@ -65,6 +65,11 @@ void vita_debug_log(const char *s, ...) {
       fprintf(config.log_file, "\n");
   }
   fflush(config.log_file);
+
+#ifdef __vita__
+  // También imprimir por mdns_log (sceClibPrintf)
+  mdns_log("%s", &buffer[25]);
+#endif
 
   free(buffer);
 

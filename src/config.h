@@ -82,6 +82,7 @@ typedef struct _CONFIGURATION {
   uint16_t port;
   int keyboard_layout; // 0=EN_US, 1=ES_ES, 2=ES_LATAM
   bool absolute_mouse; // Nuevo: guardar estado de mouse absoluto
+  bool touchscreen_mode; // Nuevo: modo touchscreen multitouch Sunshine
 } CONFIGURATION, *PCONFIGURATION;
 
 extern CONFIGURATION config;
