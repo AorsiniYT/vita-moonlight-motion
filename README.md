@@ -4,15 +4,17 @@ Vita Moonlight Motion is a PlayStation Vita port of Moonlight, with major improv
 
 ---
 
-## Recent Improvements
+## What's New
 
+- **Automatic pairing fixed:** The pairing process is now more reliable and user-friendly. You can now pair your PC directly from the Vita using "Search device"—no more manual pairing required!
+- **Absolute Touch (beta):** Experimental support for absolute touch controls.
+- **Motion controls (gyroscope):** Play with motion aiming and gyro support for a more immersive experience.
 - **Elevated floating keyboard:** The virtual keyboard now appears above the app, never covering the main screen (see screenshot below).
-- **Automatic pairing fixed:** You can now pair your PC directly from the Vita using "Search device"—no more manual pairing required!
+- **Updated libraries:** All dependencies and core libraries (moonlight-common-c, enet, inih) have been updated for better compatibility and stability.
 - **New modular mDNS sniffer:** Fast and reliable device discovery on your local network.
 - **Host status indicators:** Colored dots show if a host is online (green), offline (red), or needs IP update (yellow).
 - **IP change detection:** If a host changes its IP, you'll see a confirmation dialog with the old and new IP before updating.
 - **Manual refresh:** Press TRIANGLE (△) in the main menu or device search to refresh host/device status instantly.
-- **All core libraries updated:** Latest versions of moonlight-common-c, enet, and inih integrated for maximum compatibility and stability.
 - **UI and logic robust to missing/empty host fields.**
 - **Improved debug logging and error handling.**
 - **Many bugfixes and code cleanups.**
