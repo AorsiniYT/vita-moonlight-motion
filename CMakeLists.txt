@@ -162,5 +162,3 @@ add_dependencies(${PROJECT_NAME}.velf ${PROJECT_NAME}.elf)
 add_dependencies(${PROJECT_NAME}.vpk ${PROJECT_NAME}.velf param.sfo)
 
 add_subdirectory(third_party)
-
-

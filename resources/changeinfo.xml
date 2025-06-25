@@ -27,7 +27,16 @@
   * ip3.png: Host offline/disconnected (red).<br>
   * ip4.png: IP change confirmation dialog (shows old/new IP).<br>
   * ip5.png: Search device function showing a found local device.<br>
-]]></changes>
+## 0.11.2<br>
+* More reliable and user-friendly automatic pairing.<br>
+* Experimental absolute touch controls (beta).<br>
+* Floating virtual keyboard that no longer covers the main screen.<br>
+* Updated libraries and dependencies for improved compatibility and stability.<br>
+* New modular UDP mDNS sniffer for device discovery (replaces legacy mdns code).<br>
+* Improved debug logging, especially for device search and reconnect flows.<br>
+* Cleanup of legacy code and dependencies.<br>
+
+  ]]></changes>
 <changes app_ver="00.10"><![CDATA[
 ## 0.10.1<br>
 * Fix pairing issue (Same one from v0.9.3)<br>
