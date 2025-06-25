@@ -24,7 +24,7 @@ Vita Moonlight Motion is a PlayStation Vita port of Moonlight, with major improv
 ## Screenshots
 
 <p align="center">
-  <img src="docs/keyboard.png" alt="Floating keyboard in Steam app" width="400"/>
+  <img src="docs/keyboard.jpg" alt="Floating keyboard in Steam app" width="400"/>
   <br><b>Floating keyboard in a Steam app using Moonlight</b>
 </p>
 
