@@ -27,6 +27,7 @@
 #include <getopt.h>
 #include <ini.h>
 #include "input/vita.h"
+#include "../src/gui/mdns_log.h"
 
 extern char* strdup(const char*);
 
@@ -191,6 +192,8 @@ void config_save(const char* filename, PCONFIGURATION config) {
   write_config_int(fd, "double_tap_sprint_step_time", config->double_tap_sprint_step_time);
   write_config_float(fd, "motion_controls_scalar_x", config->motion_controls_scalar_x);
   write_config_float(fd, "motion_controls_scalar_y", config->motion_controls_scalar_y);
+  write_config_int(fd, "keyboard_layout", config->keyboard_layout);
+  write_config_bool(fd, "absolute_mouse", config->absolute_mouse);
   //write_config_bool(fd, "enable_hdr", config->stream.enableHdr);
 
   write_config_section(fd, "backtouchscreen_deadzone");
@@ -207,9 +210,8 @@ void config_save(const char* filename, PCONFIGURATION config) {
   write_config_int(fd, "offset",  config->special_keys.offset);
   write_config_int(fd, "size",    config->special_keys.size);
 
-  write_config_int(fd, "keyboard_layout", config->keyboard_layout);
+  // Guardar en la raíz, no dentro de [special_keys]
 
-  write_config_bool(fd, "absolute_mouse", config->absolute_mouse);
 
   fclose(fd);
 }
@@ -276,6 +278,7 @@ void config_parse(int argc, char* argv[], PCONFIGURATION config) {
   char* config_file = config_path;
   if (config_file) {
     config_file_parse(config_file, config);
+    mdns_log("[DEBUG] Configuración cargada: absolute_mouse = %d, show_fps = %d\n", config->absolute_mouse, config->show_fps);
   }
 
   update_layout();

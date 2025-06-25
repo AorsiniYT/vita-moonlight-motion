@@ -22,7 +22,7 @@
 #include <psp2/videodec.h>
 #include <vita2d.h>
 #include <Limelight.h>
-
+#include "mdns_log.h"
 extern char* strdup(const char*);
 
 static unsigned int settings_special_codes[] = {0,
@@ -865,7 +865,7 @@ static int settings_loop(int id, void *context, const input_data *input) {
   sprintf(current, "%d", config.mouse_acceleration);
   MENU_REPLACE(SETTINGS_VIEW_MOUSE_ACCEL, current);
 
-  sprintf(current, "%s", touchabsolute_is_enabled() ? "sí" : "no");
+  sprintf(current, "%s", config.absolute_mouse ? "yes" : "no");
   MENU_REPLACE(SETTINGS_VIEW_ABSOLUTE_MOUSE, current);
   return 0;
 }
@@ -1008,10 +1008,10 @@ int ui_settings_menu() {
   MENU_MESSAGE("Example in github repo.");
   MENU_ENTRY(SETTINGS_BACK_DEADZONE, SETTINGS_VIEW_BACK_DEADZONE, "Back touchscreen deadzone", "");
   MENU_ENTRY(SETTINGS_SPECIAL_KEYS, SETTINGS_VIEW_SPECIAL_KEYS, "Touchscreen special keys", "");
-  MENU_ENTRY(SETTINGS_HOTKEYS, SETTINGS_VIEW_HOTKEYS, "Configurar hotkeys", "");
-  MENU_ENTRY(SETTINGS_ABSOLUTE_MOUSE, SETTINGS_VIEW_ABSOLUTE_MOUSE, "Mouse absoluto (touch)", ICON_LEFT_RIGHT_ARROWS);
-  MENU_CATEGORY("Teclado");
-  MENU_ENTRY(SETTINGS_KEYBOARD_LAYOUT, SETTINGS_VIEW_KEYBOARD_LAYOUT, "Distribución de teclado", ICON_LEFT_RIGHT_ARROWS);
+  MENU_ENTRY(SETTINGS_HOTKEYS, SETTINGS_VIEW_HOTKEYS, "Configure hotkeys", "");
+  MENU_ENTRY(SETTINGS_ABSOLUTE_MOUSE, SETTINGS_VIEW_ABSOLUTE_MOUSE, "Absolute mouse (touch)", ICON_LEFT_RIGHT_ARROWS);
+  MENU_CATEGORY("Keyboard");
+  MENU_ENTRY(SETTINGS_KEYBOARD_LAYOUT, SETTINGS_VIEW_KEYBOARD_LAYOUT, "Keyboard layout", ICON_LEFT_RIGHT_ARROWS);
 
   settings_loop_setup = 1;
   assert(idx < 48);
@@ -1020,6 +1020,8 @@ int ui_settings_menu() {
 }
 
 void ui_settings_save_config() {
+  mdns_log("[DEBUG] Guardando configuración: absolute_mouse = %d\n", config.absolute_mouse);
   config_save(config_path, &config);
+  mdns_log("[DEBUG] Configuración guardada en %s\n", config_path);
 }
 

@@ -154,6 +154,9 @@ int main(int argc, char* argv[]) {
   config_parse(argc, argv, &config);
   strcpy(config.key_dir, "ux0:data/moonlight/");
 
+  // Restaurar estado de Absolute Touch al iniciar
+  touchabsolute_enable(config.absolute_mouse);
+
   // Aplicar el layout guardado después de cargar la config
   keyboardsystem_set_layout((KeyboardLayout)config.keyboard_layout);
 
