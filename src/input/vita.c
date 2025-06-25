@@ -492,12 +492,12 @@ inline void vitainput_process(void) {
 
   sceRtcGetCurrentTick(&current);
 
-  // Si el mouse absoluto está activado, procesar y salir
+  // Si el mouse absoluto está activado, procesar touch absoluto
   if (touchabsolute_is_enabled()) {
     touchabsolute_process(send_absolute_mouse_event);
     // Actualizar old para evitar repeticiones innecesarias
     memcpy(&touch_old, &touch, sizeof(TouchData));
-    return;
+    // NO return; aquí, para que también se procesen los botones y accesos directos
   }
 
   // buttons
@@ -524,21 +524,21 @@ inline void vitainput_process(void) {
   curr.rx = read_analog(map.abs_rx);
   curr.ry = read_analog(map.abs_ry);
 
-  // special touchscreen buttons
-  special(config.special_keys.nw,
-          is_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_NW),
-          is_old_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_NW));
-  special(config.special_keys.ne,
-          is_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_NE),
-          is_old_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_NE));
-  special(config.special_keys.sw,
-          is_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SW),
-          is_old_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SW));
-  special(config.special_keys.se,
-          is_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SE),
-          is_old_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SE));
-
-  
+  // special touchscreen buttons SOLO si el absolute mouse está desactivado
+  if (!touchabsolute_is_enabled()) {
+    special(config.special_keys.nw,
+            is_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_NW),
+            is_old_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_NW));
+    special(config.special_keys.ne,
+            is_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_NE),
+            is_old_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_NE));
+    special(config.special_keys.sw,
+            is_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SW),
+            is_old_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SW));
+    special(config.special_keys.se,
+            is_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SE),
+            is_old_pressed(INPUT_TYPE_TOUCHSCREEN | TOUCHSEC_SPECIAL_SE));
+  }
 
   if (config.enable_double_tap_sprint) {
     check_for_double_click(&curr);
@@ -574,7 +574,6 @@ inline void vitainput_process(void) {
     case SCREEN_TAP:
       if (sceRtcCompareTick(&current, &until) >= 0) {
         mouse_click(finger_count, false);
-
         front_state = NO_TOUCH_ACTION;
       }
       break;
