@@ -1,0 +1,49 @@
+name: Build PSVita (CMake)
+
+on:
+  push:
+    branches: [ vita ]
+  pull_request:
+    branches: [ vita ]
+  workflow_dispatch:  # 👉 Permite ejecución manual
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      VITASDK: /opt/vitasdk
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build python3 python3-pip curl
+
+      - name: Install VitaSDK (vdpm)
+        run: |
+          git clone https://github.com/vitasdk/vdpm
+          cd vdpm
+          ./bootstrap-vitasdk.sh
+          export VITASDK=/usr/local/vitasdk
+          export PATH=$VITASDK/bin:$PATH
+          ./install-all.sh
+          echo "/usr/local/vitasdk/bin" >> $GITHUB_PATH
+
+      - name: Set up VitaSDK environment
+        run: |
+          echo "VITASDK=/usr/local/vitasdk" >> $GITHUB_ENV
+          echo "PATH=$PATH:/usr/local/vitasdk/bin" >> $GITHUB_ENV
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=$VITASDK/share/vita.toolchain.cmake -G Ninja
+
+      - name: Build
+        run: |
+          cmake --build build
+
+      - name: List build outputs
+        run: |
+          ls -lh build
